@@ -182,12 +182,12 @@ class Method_block
     // ********************** VAR PROCESSING *********************** DONE
     private function evaluateVariable(\DOMElement $var_node): Class_instance
     {
-        $varName = $var_node->getAttribute("name");
+        $var_name = $var_node->getAttribute("name");
 
         // print("Evaluating variable: " . $varName . "\n");
         $value = null;
 
-        if ($varName === "super") {
+        if ($var_name === "super") {
             // Those next 3 commands get name of parent of current class
             $self_instance = $this->get_variable("self");    // instance of self (= current class)
             $self_type = $self_instance->get_class_name();   // type of self instance
@@ -197,13 +197,13 @@ class Method_block
             $value->set_value("__SUPER__");
         }
         else{
-            $value = $this->get_variable($varName);
+            $value = $this->get_variable($var_name);
         }
         
         // print_r($value);
 
         if ($value === null) {
-            throw new UsingUndefinedException("Using undefined variable: " . $varName);
+            throw new UsingUndefinedException("Using undefined variable: " . $var_name);
         }
 
         return $value;
@@ -219,7 +219,16 @@ class Method_block
         $selector = $send_node->getAttribute("selector");
 
         // Get expr node to evaluate the receiver
-        $expr_node = $send_node->getElementsByTagName("expr")->item(0);
+        $expr_node = null;
+        foreach ($send_node->childNodes as $child_node) {
+            if ($child_node instanceof \DOMElement) {
+                if ($child_node->tagName === "expr") {
+                    $expr_node = $child_node;
+                    break;
+                }
+            }
+        }
+                
         $receiver = $this->evaluate_expr($expr_node);
 
         // $receiver is string only when sending a class method meaning creating a new class instance
@@ -260,24 +269,22 @@ class Method_block
                 $new_class = new Class_instance($receiver);
 
                 // Set default value
-                switch ($receiver) {
-                    case "Integer":
-                        $new_class->set_value(0);
-                        break;
-                    case "String":
-                        $new_class->set_value("");
-                        break;
-                    case "True":
-                        $new_class->set_value(true);
-                        break;
-                    case "False":
-                        $new_class->set_value(false);
-                        break;
-                    default:
-                        if (Class_definition::get_class($receiver) === null) {
-                            throw new UsingUndefinedException("Trying to create instance of undefined class: " . $receiver);
-                        }
+                if (Class_definition::is_instance_of($receiver, "Integer")) {
+                    $new_class->set_value(0);
                 }
+                else if (Class_definition::is_instance_of($receiver, "String")) {
+                    $new_class->set_value("");
+                }
+                else if (Class_definition::is_instance_of($receiver, "True")) {
+                    $new_class->set_value(true);
+                }
+                else if (Class_definition::is_instance_of($receiver, "False")) {
+                    $new_class->set_value(false);
+                }
+                else if (Class_definition::get_class($receiver) === null) {
+                    throw new UsingUndefinedException("Trying to create instance of undefined class: " . $receiver);
+                }
+                // Rest of the classes dont use internal value so we are not setting anyhting
                 return $new_class;
 
             case "from:":
@@ -296,6 +303,7 @@ class Method_block
                     throw new IncorrectArgumentException("Missing argument for 'from:'");
                 }
                 return $new_class;
+
             case "read":
                 // Check if given class is instance of built-in String class 
                 if (Class_definition::is_instance_of($receiver, "String") === false) {
@@ -315,7 +323,7 @@ class Method_block
     }
 
     // ********************** INVOKING CLASS INSTANCE METHODS ***********************
-    private function invoke_instance_method(Class_instance $receiver, string $selector, array $args): Class_instance
+    public function invoke_instance_method(Class_instance $receiver, string $selector, array $args): Class_instance
     {
         // Get the method from the class definition
         $method = Class_definition::get_method($receiver->get_class_name(), $selector);
@@ -333,7 +341,7 @@ class Method_block
             if ($num_of_args === 0){
                 $result = $receiver->get_attribute($selector);
                 if ($result === null) {
-                    throw new UsingUndefinedException("Unknown attribute: " . $selector);
+                    throw new MessageDNUException("Unknown attribute/method: " . $selector);
                 }
                 return $result;
             }
@@ -346,7 +354,7 @@ class Method_block
                 return $receiver;
             }
             
-            throw new UsingUndefinedException("Unknown attribute: " . $selector);
+            throw new MessageDNUException("Unknown attribute: " . $selector);
         }
 
         // Method found
@@ -381,6 +389,8 @@ class Method_block
                 case "timesRepeat:":
                 case "whileTrue:":
                 case "ifTrue:ifFalse:":
+                case "and:":
+                case "or:":
                     // Those methods need new block instance with self variable set
                     $block = new Method_block();
                     $block->set_variable("self", $receiver);
