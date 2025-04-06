@@ -10,6 +10,7 @@ use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
 use IPP\Student\Exception\MissingMainRunException;
 
+// TODO: greaterThan or ifTrueifFalse doesnt work
 // TODO: built-in methods test, correct
 // TODO: super implementation - maybe works??? Cant use __SUPER__ as string value
 // TODO: other stuff shouuld understand value: messages other then Block class maybe
