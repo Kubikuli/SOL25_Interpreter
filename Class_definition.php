@@ -100,5 +100,4 @@ class Class_definition
         // If not found, return false
         return false;
     }
-
 }

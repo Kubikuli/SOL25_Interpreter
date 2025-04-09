@@ -147,9 +147,6 @@ class Method_builder
 
             $result = new Class_instance("Integer");
             $result->set_value($receiver->get_value() + $object->get_value());
-            // print_r($result->get_value());
-            // print_r($receiver->get_value());
-            // print_r($object->get_value());
             return $result;
         });
 
@@ -161,10 +158,6 @@ class Method_builder
 
             $result = new Class_instance("Integer");
             $result->set_value($receiver->get_value() - $object->get_value());
-            // print_r($result->get_value());
-            // print_r($receiver->get_value());
-            // print_r($object->get_value());
-
             return $result;
         });
 
@@ -217,7 +210,6 @@ class Method_builder
             return $receiver;
         });
 
-        // TODO: check if this works correctly
         $class->add_builtIn_method("timesRepeat:", function(Method_block $block, Class_instance $receiver, Class_instance $object): Class_instance
         {
             $repeat_times = $receiver->get_value();
@@ -236,9 +228,7 @@ class Method_builder
                 if ($repeat_times > 0) {
                     for ($i = 1; $i <= $repeat_times; $i++) {
                         $argument->set_value($i);
-                        $block->invoke_instance_method($object, "value:", [$i]);
-
-                        $retrn_value = $block->get_return_value();
+                        $retrn_value = $block->invoke_instance_method($object, "value:", [$argument]);
                     }
                     return $retrn_value;
                 }
@@ -358,7 +348,6 @@ class Method_builder
             return $this->true_instance();
         });
 
-        // TODO: check if this works correctly
         $class->add_builtIn_method("value", function(Method_block $block, Class_instance $receiver): Class_instance
         {
             $block_node = $receiver->get_value();
@@ -391,7 +380,6 @@ class Method_builder
             return $result;
         });
 
-        // TODO: check if this works correctly
         $class->add_builtIn_method("whileTrue:", function(Method_block $block, Class_instance $receiver, Class_instance $object): Class_instance
         {
             // Default return value if for doesn't run
@@ -414,8 +402,7 @@ class Method_builder
                     }
 
                     // Send value message if condition was true
-                    $block->invoke_instance_method($object, "value", []);
-                    $ret_val = $block->get_return_value();
+                    $ret_val = $block->invoke_instance_method($object, "value", []);
                 }
                 return $ret_val;
             }
@@ -464,9 +451,15 @@ class Method_builder
 
         $class->add_builtIn_method("and:", function(Method_block $block, Class_instance $receiver, Class_instance $object): Class_instance
         {
-            $block->invoke_instance_method($object, "value", []);
-            $ret_val = $block->get_return_value();
+            $ret_val= $block->invoke_instance_method($object, "value", []);
             return $ret_val;
+        });
+
+        $class->add_builtIn_method("value", function(Method_block $block, Class_instance $receiver): Class_instance
+        {
+            $true = new Class_instance("True");
+            $true->set_value(true);
+            return $true;
         });
 
         $class->add_builtIn_method("or:", function(Method_block $block, Class_instance $receiver, Class_instance $object): Class_instance
@@ -478,12 +471,6 @@ class Method_builder
         {
             // Get the block node from the XML that is to be processed
             $block_node = $true_object->get_value();
-
-            if ($receiver->get_value() !== true) {
-                // This should never execute, but just in case
-                // Get the block node from the XML that is to be processed
-                $block_node = $false_object->get_value();
-            }
 
             // Process the block
             $block->process_block($block_node, []);
@@ -528,10 +515,16 @@ class Method_builder
             return $receiver;
         });
 
+        $class->add_builtIn_method("value", function(Method_block $block, Class_instance $receiver): Class_instance
+        {
+            $false = new Class_instance("False");
+            $false->set_value(false);
+            return $false;
+        });
+
         $class->add_builtIn_method("or:", function(Method_block $block, Class_instance $receiver, Class_instance $object): Class_instance
         {
-            $block->invoke_instance_method($object, "value", []);
-            $ret_val = $block->get_return_value();
+            $ret_val = $block->invoke_instance_method($object, "value", []);
             return $ret_val;
         });
 
@@ -539,12 +532,6 @@ class Method_builder
         {
             // Get the block node from the XML that is to be processed
             $block_node = $false_object->get_value();
-
-            if ($receiver->get_value() !== false) {
-                // This shoul never execute, but just in case
-                // Get the block node from the XML that is to be processed
-                $block_node = $true_object->get_value();
-            }
 
             // Process the block
             $block->process_block($block_node, []);

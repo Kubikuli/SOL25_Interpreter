@@ -54,7 +54,13 @@ class Class_instance
         $class = Class_definition::get_class($this->class_name);
 
         while(true){
-            $parent_instance = Class_definition::get_class($class->get_parent_name());
+            $parent_name = $class->get_parent_name();
+
+            if ($parent_name === "Object" || $parent_name === ""){
+                break;
+            }
+
+            $parent_instance = Class_definition::get_class($parent_name);
 
             if ($parent_instance === null){
                 break;

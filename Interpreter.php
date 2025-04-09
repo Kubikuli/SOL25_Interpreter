@@ -10,9 +10,7 @@ use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
 use IPP\Student\Exception\MissingMainRunException;
 
-// TODO: greaterThan or ifTrueifFalse doesnt work
-// TODO: built-in methods test, correct
-// TODO: super implementation - maybe works??? Cant use __SUPER__ as string value
+// Super implementation - Cant use __SUPER__ as string value
 // TODO: other stuff shouuld understand value: messages other then Block class maybe
 
 class Interpreter extends AbstractInterpreter
@@ -68,9 +66,6 @@ class Interpreter extends AbstractInterpreter
         // Insert built-in class definitions
         $this->define_builtin_classes();
 
-        // TODO: Debug output to verify parsing
-        // print_r(Class_definition::$instances);
-
         // Execute "run" method from "Main"
         $this->execute_method("Main", "run", []);
 
@@ -82,11 +77,10 @@ class Interpreter extends AbstractInterpreter
         // Check if given method in given class exists
         $method = Class_definition::get_method($class_name, $method_name);
         if ($method === null){
-            throw new MissingMainRunException("Class not found" . $class_name . " or method not found " . $method_name);
+            throw new MissingMainRunException("Class not found: " . $class_name . " or method not found: " . $method_name);
         }
 
-        // TODO: Not sure about this "main_class" thing, but we have to handle 'self' somehow, this seems kinda smart maybe???
-        // actually seems legit
+        // Main class instance
         $main_class = new Class_instance($class_name);
         $block = new Method_block();
 

@@ -35,7 +35,6 @@ class Parser
             $method_name = $method_node->getAttribute("selector");
             $parameters = [];
     
-            // TODO: maybe f parameters, will check when invocating
             // Extract parameters if present
             foreach ($method_node->getElementsByTagName("parameter") as $param_node) {
                 $parameters[$param_node->getAttribute("order")-1] = $param_node->getAttribute("name");
