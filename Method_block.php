@@ -10,7 +10,10 @@ use IPP\Student\Exception\UsingUndefinedException;
 
 class Method_block
 {
-    protected array $variables = [];    // list of variables
+    /**
+     * @var array<string, Class_instance> List of variables of current block
+     */
+    protected array $variables = [];    
     protected mixed $return_value = null;    // return value of the method
 
     public function set_return_value(Class_instance $value): void
@@ -34,21 +37,21 @@ class Method_block
     }
 
     // ********************** BLOCK PROCESSING ***********************
+    /**
+     * @param array<Class_instance> $args Arguments given to the block
+     */
     public function process_block(\DOMElement $block_node, array $args): void
     {
         // Assign argument values to parameters
-        if ($block_node instanceof \DOMElement) {
-            // For each child node
-            foreach ($block_node->childNodes as $child_node) {
-                if ($child_node instanceof \DOMElement) {
-                    // Check if it's a parameter
-                    if ($child_node->tagName === "parameter") {
-                        // Assign it to the block attribute as variable with correct value
-                        $order = (int)$child_node->getAttribute("order");
-                        $par_name = $child_node->getAttribute("name");
+        foreach ($block_node->childNodes as $child_node) {
+            if ($child_node instanceof \DOMElement) {
+                // Check if it's a parameter
+                if ($child_node->tagName === "parameter") {
+                    // Assign it to the block attribute as variable with correct value
+                    $order = (int)$child_node->getAttribute("order");
+                    $par_name = $child_node->getAttribute("name");
 
-                        $this->set_variable($par_name, $args[$order-1]);
-                    }
+                    $this->set_variable($par_name, $args[$order-1]);
                 }
             }
         }
@@ -113,7 +116,7 @@ class Method_block
         // Skip expr node
         $expression = $expr_node;
 
-        // Find first child node thats not text
+        // Find first child node thats not text = always the node starting expression
         foreach ($expr_node->childNodes as $child_node) {
             if ($child_node instanceof \DOMElement) {
                 $expression = $child_node;
@@ -121,26 +124,21 @@ class Method_block
             }
         }
 
-        if ($expression instanceof \DOMElement) {
-            $elem_type = $expression->tagName;
+        $elem_type = $expression->tagName;
 
-            switch ($elem_type) {
-                case "literal":
-                    return $this->evaluateLiteral($expression);
-                case "var":
-                    return $this->evaluateVariable($expression);
-                case "send":
-                    return $this->evaluateMessageSend($expression);
-                case "block":
-                    $block = new Class_instance("Block");
-                    $block->set_value($expression);
-                    return $block;
-                default:
-                    throw new InterpretException("Unknown expression type: " . $elem_type);
-            }
-        }
-        else {
-            throw new UnexpectedXMLFormatException();
+        switch ($elem_type) {
+            case "literal":
+                return $this->evaluateLiteral($expression);
+            case "var":
+                return $this->evaluateVariable($expression);
+            case "send":
+                return $this->evaluateMessageSend($expression);
+            case "block":
+                $block = new Class_instance("Block");
+                $block->set_value($expression);
+                return $block;
+            default:
+                throw new InterpretException("Unknown expression type: " . $elem_type);
         }
     }
 
@@ -240,6 +238,9 @@ class Method_block
     }
 
     // **************************** ARG PROCESSING *****************************
+    /**
+     * @return array<Class_instance> List of all arguments found
+     */
     private function get_args(\DOMElement $send_node): array
     {
         $args = [];
@@ -257,6 +258,9 @@ class Method_block
     }
 
     // ************************* INVOKING CLASS INSTANCE CONSTRUCTOR *************************
+    /**
+     * @param array<Class_instance> $args Arguments given to the block
+     */
     private function invoke_class_method(string $receiver, string $selector, array $args): Class_instance
     {
         switch ($selector) {
@@ -287,14 +291,9 @@ class Method_block
                 $new_class = new Class_instance($receiver);
                 if (isset($args[0])) {
                     $arg = $args[0];
-                    if ($arg instanceof Class_instance) {
-                        // If they are the same class type or one is instance of the other
-                        if ($arg->is_instance_of($receiver) || $new_class->is_instance_of($arg->get_class_name())) {
-                            $arg->copy_values($new_class);
-                        }
-                        else {
-                            throw new IncorrectArgumentException("Invalid class type for 'from:' " . $receiver);
-                        }
+                    // If they are the same class type or one is instance of the other
+                    if ($arg->is_instance_of($receiver) || $new_class->is_instance_of($arg->get_class_name())) {
+                        $arg->copy_values($new_class);
                     }
                     else {
                         throw new IncorrectArgumentException("Invalid class type for 'from:' " . $receiver);
@@ -325,6 +324,9 @@ class Method_block
     }
 
     // ************************** INVOKING CLASS INSTANCE METHODS **************************
+    /**
+     * @param array<Class_instance> $args Arguments to be send with message
+     */
     public function invoke_instance_method(Class_instance $receiver, string $selector, array $args): Class_instance
     {
         // Get the method from the class definition
@@ -380,7 +382,8 @@ class Method_block
             return $return_val;
         }
         // Built-in method
-        else if (is_callable($method)) {
+        // == is_callable() 
+        else {
             $result = null;
             switch($selector) {
                 case "value":
@@ -405,10 +408,6 @@ class Method_block
                     break;
             }
             return $result;
-        }
-        else{
-            // This never reaches, but just in case
-            throw new InterpretException("Unknown method type. If you got this error msg, something is REALLY wrong");
         }
     }
 }   // class Method_block

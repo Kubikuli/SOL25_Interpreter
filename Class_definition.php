@@ -6,9 +6,15 @@ namespace IPP\Student;
 // Each instance represents user defined class
 class Class_definition
 {
-    static public array $instances = [];    // list of all it's instances (= all class definitions)
+    /**
+     * @var array<string, self> List of all it's instances (= all class definitions associated by name)
+     */
+    static public array $instances = [];
     protected string $parent;      // parent class name
-    protected array $methods = [];      // list of instance methods in the class
+    /**
+     * @var array<string, \DOMElement|callable> List of instance methods specific for the given class
+     */
+    protected array $methods = [];
 
     // Constructor, appends the new instance to the list of instances
     public function __construct(string $class_name, string $parent_name = "")

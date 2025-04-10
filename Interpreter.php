@@ -72,6 +72,9 @@ class Interpreter extends AbstractInterpreter
         return ReturnCode::OK;
     }
 
+    /**
+     * @param array<Class_instance> $args Arguments for the method call
+     */
     private function execute_method(string $class_name, string $method_name, array $args): void
     {
         // Check if given method in given class exists

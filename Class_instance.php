@@ -8,7 +8,10 @@ class Class_instance
 {
     protected string $class_name;   // class type of the instance
     protected mixed $value;       // intern value attribute used only by built-in classes
-    protected array $attributes;     // attributes of the instance
+    /**
+     * @var array<string, Class_instance> List of attributes of the instance
+     */
+    protected array $attributes;
 
     // Constructor, sets class and initializes attributes
     public function __construct(string $class)
