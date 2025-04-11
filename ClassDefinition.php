@@ -2,6 +2,7 @@
 
 namespace IPP\Student;
 
+use IPP\Student\Exception\UsingUndefinedException;
 
 // Each instance represents user defined class
 class ClassDefinition
@@ -32,15 +33,14 @@ class ClassDefinition
 
     // Searches for the class in the list of instances
     // Returns the definition instance of the class if found, otherwise null
-    static public function getClass(string $class_name): ?ClassDefinition
+    static public function getClass(string $class_name): ClassDefinition
     {
         // Search for the class in the list of instances
-        if (isset(self::$instances[$class_name])) {
-            return self::$instances[$class_name];
+        if (!isset(self::$instances[$class_name])) {
+            throw new UsingUndefinedException("Undefined class: " . $class_name);
         }
 
-        // If not found, return null
-        return null;
+        return self::$instances[$class_name];
     }
 
     // Returns root DOMElement of the method or null if method doesnt exist in given class
@@ -48,10 +48,6 @@ class ClassDefinition
     {
         // Check if the class exists
         $instance = self::getClass($class_name);
-        if ($instance === null) {
-            return null;
-            // Maybe throw an exception here, unknown class name? but shouldnt happen
-        }
 
         // Search for the method
         if (isset($instance->methods[$method_name])) {
@@ -81,11 +77,8 @@ class ClassDefinition
 
     public static function isInstanceOf(string $class_name, string $possible_parent): bool
     {
-        // Check if the class exists
+        // Get class definition instance
         $instance = self::getClass($class_name);
-        if ($instance === null) {
-            return false;
-        }
 
         // Check if the class is the same as the possible parent
         if ($class_name === $possible_parent) {

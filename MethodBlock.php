@@ -14,14 +14,20 @@ class MethodBlock
      * @var array<string, ClassInstance> List of variables of current block
      */
     protected array $variables = [];    
-    protected mixed $return_value = null;    // return value of the method
+    protected ClassInstance $return_value;    // return value of the method
+
+    // Constructor
+    public function __construct()
+    {
+        $this->return_value = new ClassInstance("Nil");
+    }
 
     public function setReturnValue(ClassInstance $value): void
     {
         $this->return_value = $value;
     }
 
-    public function getReturnValue(): mixed
+    public function getReturnValue(): ClassInstance
     {
         return $this->return_value;
     }
@@ -31,10 +37,13 @@ class MethodBlock
         $this->variables[$name] = $value;
     }
 
-    public function getVariable(string $name): ?ClassInstance
+    public function getVariable(string $name): ClassInstance
     {
-        return $this->variables[$name] ?? null;
-    }
+        if (!isset($this->variables[$name])) {
+            throw new UsingUndefinedException("Using undefined variable: " . $name);
+        }
+        return $this->variables[$name];
+        }
 
     // ********************** BLOCK PROCESSING ***********************
     /**
@@ -91,6 +100,10 @@ class MethodBlock
                                     // Get variable name
                                     if ($grand_child_node->tagName === "var"){
                                         $var_name = $grand_child_node->getAttribute("name");
+
+                                        if ($var_name === ""){
+                                            throw new UnexpectedXMLFormatException("Malformed XML. Missing name attribute.");
+                                        }
                                     }
                                     // Get value to be assigned
                                     else if($grand_child_node->tagName === "expr"){
@@ -99,9 +112,9 @@ class MethodBlock
                                 }
                             }
 
-                            if (is_string($result) || $result === null){
+                            if (is_string($result) || $result === null || $var_name === null){
                                 // This should never reach, only with malformed XML
-                                throw new InterpretException("Malformed XML. If you got this error msg, something is REALLY wrong, sorry");
+                                throw new InterpretException("Malformed XML. If you got this error msg, something is REALLY wrong, sorry.");
                             }
 
                             // Assign value to the variable
@@ -200,10 +213,6 @@ class MethodBlock
             $value = $this->getVariable($var_name);
         }
 
-        if ($value === null) {
-            throw new UsingUndefinedException("Using undefined variable: " . $var_name);
-        }
-
         return $value;
     }
 
@@ -226,7 +235,11 @@ class MethodBlock
                 }
             }
         }
-                
+
+        if ($expr_node === null) {
+            throw new UnexpectedXMLFormatException("Malformed XML. Missing expr node.");
+        }
+
         $receiver = $this->evaluateExpr($expr_node);
 
         // $receiver is string only when sending a class method meaning creating a new class instance
@@ -254,7 +267,17 @@ class MethodBlock
                     // Get the argument value
                     $order = (int)$arg_node->getAttribute("order");
                     $expr_node = $arg_node->getElementsByTagName("expr")->item(0);
-                    $args[$order-1] = $this->evaluateExpr($expr_node);
+
+                    if ($expr_node === null) {
+                        throw new UnexpectedXMLFormatException("Malformed XML. Missing expr node.");
+                    }
+
+                    $arg = $this->evaluateExpr($expr_node);
+                    if (is_string($arg)) {
+                        throw new InterpretException("Invalid argument type: " . $arg);
+                    }
+
+                    $args[$order-1] = $arg;
                 }
             }
         }
@@ -285,10 +308,7 @@ class MethodBlock
                 else if (ClassDefinition::isInstanceOf($receiver, "False")) {
                     $new_class->setValue(false);
                 }
-                else if (ClassDefinition::getClass($receiver) === null) {
-                    throw new UsingUndefinedException("Trying to create instance of undefined class: " . $receiver);
-                }
-                // Rest of the classes dont use internal value so we are not setting anyhting
+                // Rest of the classes dont use internal value so we are not setting anything
                 return $new_class;
 
             case "from:":
@@ -376,14 +396,7 @@ class MethodBlock
 
             $block->processBlock($block_node, $args);
 
-            $return_val = $block->getReturnValue();
-
-            if ($return_val === null) {
-                $return_val = new ClassInstance("Nil");
-                $return_val->setValue(null);
-            }
-
-            return $return_val;
+            return $block->getReturnValue();
         }
         // Built-in method
         // == is_callable() 

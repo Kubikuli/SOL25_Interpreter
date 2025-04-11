@@ -141,46 +141,62 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("plus:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            if (!is_numeric($object->getValue())){
+            $a = $receiver->getValue();
+            $b = $object->getValue();
+
+            if (!is_numeric($b) || !is_numeric($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
-
+        
             $result = new ClassInstance("Integer");
-            $result->setValue($receiver->getValue() + $object->getValue());
+            $result->setValue($a + $b);
             return $result;
         });
 
         $class->addBuiltinMethod("minus:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            if (!is_numeric($object->getValue())){
+            $a = $receiver->getValue();
+            $b = $object->getValue();
+
+            // The second check is just for PHPstan, it will never actually possibly happend
+            if (!is_numeric($b) || !is_numeric($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
             $result = new ClassInstance("Integer");
-            $result->setValue($receiver->getValue() - $object->getValue());
+            $result->setValue($a - $b);
             return $result;
         });
 
         $class->addBuiltinMethod("multiplyBy:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            if (!is_numeric($object->getValue())){
+            $a = $receiver->getValue();
+            $b = $object->getValue();
+
+            if (!is_numeric($b) || !is_numeric($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
             $result = new ClassInstance("Integer");
-            $result->setValue($receiver->getValue() * $object->getValue());
+            $result->setValue($a * $b);
             return $result;
         });
 
         $class->addBuiltinMethod("divBy:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            if (!is_numeric($object->getValue())){
+            $a = $receiver->getValue();
+            $b = $object->getValue();
+
+            if (!is_numeric($b) || !is_numeric($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
-            if ($object->getValue() !== 0){
+            $a = (int)$a;
+            $b = (int)$b;
+
+            if ($b !== 0){
                 $result = new ClassInstance("Integer");
-                $result->setValue(intdiv((int)$receiver->getValue(), (int)$object->getValue()));
+                $result->setValue(intdiv($a, $b));
                 return $result;
             }
             else{
@@ -191,8 +207,9 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
         {
             $string = new ClassInstance("String");
-            if ($receiver->getValue() !== null){
-                $string->setValue((string)$receiver->getValue());
+            $value = $receiver->getValue();
+            if (is_numeric($value)){
+                $string->setValue((string)$value);
             }
             else{
                 $string->setValue("0");
@@ -236,6 +253,9 @@ class BuiltinMethodBuilder
 
             if ($repeat_times > 0) {
                 $block_node = $object->getValue();
+                if (!($block_node instanceof \DOMElement)){
+                    throw new IncorrectArgumentException("Incorrect argument value/type");
+                }    
 
                 $argument = new ClassInstance("Integer");
                 $argument->setValue(0);
@@ -272,8 +292,13 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("print", function(ClassInstance $receiver): ClassInstance
         {
             $stdout = Interpreter::getStdoutWriter();
-            if ($stdout && $receiver->getValue() !== null) {
-                $stdout->writeString($receiver->getValue());
+            $msg = $receiver->getValue();
+
+            if ($stdout && is_string($msg)){
+                $stdout->writeString($msg);
+            }
+            else{
+                throw new IncorrectArgumentException("Incorrect argument value/type");  // TODO: check exception type
             }
             return $receiver;
         });
@@ -306,18 +331,30 @@ class BuiltinMethodBuilder
                 return $nil;
             }
 
+            $str1 = $receiver->getValue();
+            $str2 = $object->getValue();
+            if (!is_string($str1) || !is_string($str2)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");      // TODO: check exception type
+            }
+
             $string = new ClassInstance("String");
-            $string->setValue($receiver->getValue() . $object->getValue());
+            $string->setValue($str1 . $str2);
             return $string;
         });
 
         $class->addBuiltinMethod("startsWith:endsBefore:", function(ClassInstance $receiver, ClassInstance $from, ClassInstance $to): ClassInstance
         {
             if ($receiver->getValue() !== null && $from->getValue() !== null && $to->getValue() !== null) {
+                $original_string = $receiver->getValue();
+
+                if (!is_string($original_string)){
+                    throw new IncorrectArgumentException("Incorrect argument value/type");  // TODO: check what type of exeption to throw
+                }
+
                 $start = $from->getValue();
                 $end = $to->getValue();
 
-                if ($start < 1 || $end < 1 || $end > strlen($receiver->getValue())+1) {
+                if (!is_int($start) || !is_int($end) || $start < 1 || $end < 1 || $end > strlen($original_string)+1) {
                     $nil = new ClassInstance("Nil");
                     $nil->setValue(null);
                     return $nil;
@@ -330,7 +367,7 @@ class BuiltinMethodBuilder
                     return $string;
                 }
 
-                $substring = substr($receiver->getValue(), $start-1, $end-$start);
+                $substring = substr($original_string, (int)$start-1, (int)$end-$start);
                 $string->setValue($substring);
                 return $string;
             }
@@ -351,6 +388,10 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
         {
             $block_node = $receiver->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
             $block->processBlock($block_node, []);
             $result = $block->getReturnValue();
             return $result;
@@ -359,6 +400,10 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1): ClassInstance
         {
             $block_node = $receiver->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
             $block->processBlock($block_node, [$arg1]);
             $result = $block->getReturnValue();
             return $result;
@@ -367,6 +412,10 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("value:value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1, ClassInstance $arg2): ClassInstance
         {
             $block_node = $receiver->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
             $block->processBlock($block_node, [$arg1, $arg2]);
             $result = $block->getReturnValue();
             return $result;
@@ -375,6 +424,10 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("value:value:value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1, ClassInstance $arg2, ClassInstance $arg3): ClassInstance
         {
             $block_node = $receiver->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
             $block->processBlock($block_node, [$arg1, $arg2, $arg3]);
             $result = $block->getReturnValue();
             return $result;
@@ -388,16 +441,20 @@ class BuiltinMethodBuilder
 
             // Get the block node from the XML that represents the condition
             $condition_node = $receiver->getValue();
+            if (!($condition_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect value of Block class");
+            }
 
             $obj_type = $object->getClassName();
             // Sends 'value:' message instead
             if ($obj_type !== "Object") {
+    
                 while(true) {
                     // Check if condition is true
                     $block->processBlock($condition_node, []);
                     $result = $block->getReturnValue();
     
-                    if ($result === null || $result->getClassName() !== "True") {
+                    if ($result->getClassName() !== "True") {
                         break;
                     }
 
@@ -408,13 +465,16 @@ class BuiltinMethodBuilder
             }
 
             $execute_node = $object->getValue();
+            if (!($execute_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
 
             while(true) {
                 // Check if condition is true
                 $block->processBlock($condition_node, []);
                 $result = $block->getReturnValue();
 
-                if ($result === null || $result->getClassName() !== "True") {
+                if ($result->getClassName() !== "True") {
                     break;
                 }
                 // Execute the block if condition was true
@@ -471,6 +531,9 @@ class BuiltinMethodBuilder
         {
             // Get the block node from the XML that is to be processed
             $block_node = $true_object->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
 
             // Process the block
             $block->processBlock($block_node, []);
@@ -532,6 +595,9 @@ class BuiltinMethodBuilder
         {
             // Get the block node from the XML that is to be processed
             $block_node = $false_object->getValue();
+            if (!($block_node instanceof \DOMElement)){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
 
             // Process the block
             $block->processBlock($block_node, []);

@@ -5,9 +5,6 @@ namespace IPP\Student;
 
 class Parser
 {
-    // Constructor
-    public function __construct(){}
-
     // Parses given DOMDocument and creates instances of 'User_defined_cls'
     public function parse(\DOMDocument $dom): void
     {

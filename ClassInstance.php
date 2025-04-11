@@ -2,12 +2,13 @@
 
 namespace IPP\Student;
 
+use IPP\Student\Exception\UsingUndefinedException;
 
 // Each instance represents instance of user defined class
 class ClassInstance
 {
     protected string $class_name;   // class type of the instance
-    protected mixed $value;       // intern value attribute used only by built-in classes
+    protected int|float|string|\DOMElement|bool|null $value;       // intern value attribute used only by some built-in classes
     /**
      * @var array<string, ClassInstance> List of attributes of the instance
      */
@@ -32,12 +33,12 @@ class ClassInstance
         return $this->attributes[$name] ?? null;
     }
 
-    public function setValue(mixed $value): void
+    public function setValue(int|float|string|\DOMElement|bool|null $value): void
     {
         $this->value = $value;
     }
 
-    public function getValue(): mixed
+    public function getValue(): int|float|string|\DOMElement|bool|null
     {
         return $this->value ?? null;
     }
@@ -64,10 +65,6 @@ class ClassInstance
             }
 
             $parent_instance = ClassDefinition::getClass($parent_name);
-
-            if ($parent_instance === null){
-                break;
-            }
 
             if ($parent_instance === $possible_parent_instance){
                 return true;

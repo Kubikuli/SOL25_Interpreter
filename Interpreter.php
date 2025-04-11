@@ -6,13 +6,12 @@ use IPP\Core\AbstractInterpreter;
 use IPP\Core\Interface\InputReader;
 use IPP\Core\Interface\OutputWriter;
 use IPP\Core\ReturnCode;
-use IPP\Student\Exception\MessageDNUException;
 use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
 use IPP\Student\Exception\MissingMainRunException;
+use IPP\Student\Exception\UsingUndefinedException;
 
 // Super implementation - Cant use __SUPER__ as string value
-// TODO: other stuff shouuld understand value: messages other then Block class maybe
     // $val = $this->input->readString();
     // $this->stdout->writeString("stdout");
     // $this->stderr->writeString("stderr");
@@ -77,7 +76,13 @@ class Interpreter extends AbstractInterpreter
      */
     private function executeRunMethod(string $class_name, string $method_name, array $args): void
     {
-        $method = ClassDefinition::getMethod($class_name, $method_name);
+        try {
+            // Check if class exists
+            $method = ClassDefinition::getMethod($class_name, $method_name);
+        } 
+        catch (UsingUndefinedException) {
+            throw new MissingMainRunException("Class not found: " . $class_name);
+        }
 
         // Main class instance
         $main_class = new ClassInstance($class_name);
