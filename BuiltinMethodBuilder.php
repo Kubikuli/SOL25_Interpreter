@@ -1,0 +1,550 @@
+<?php
+
+namespace IPP\Student;
+
+use IPP\Student\Exception\IncorrectArgumentException;
+
+class BuiltinMethodBuilder
+{
+    // Returns new instance of True class
+    private function trueInstance(): ClassInstance
+    {
+        $true = new ClassInstance("True");
+        $true->setValue(true);
+        return $true;
+    }
+
+    // Returns new instance of False class
+    private function falseInstance(): ClassInstance
+    {
+        $false = new ClassInstance("False");
+        $false->setValue(false);
+        return $false;
+    }
+
+    // Build in insatnce methods for Object class
+    public function buildObjectMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            // Exact same class instance
+            if ($receiver === $object) {
+                return $this->trueInstance();
+            }
+
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($receiver->getValue() !== null && $object->getValue() !== null) {
+                $equal = $receiver->getValue() === $object->getValue();
+                if ($equal) {
+                    return $this->trueInstance();
+                }
+            }
+
+            // identicalTo: part
+            if ($receiver === $object) {
+                return $this->trueInstance();
+            }
+
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        {
+            $string = new ClassInstance("String");
+            $string->setValue("");
+            return $string;
+        });
+
+        $class->addBuiltinMethod("isNumber", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("isString", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("isBlock", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("isNil", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->falseInstance();
+        });
+    }
+
+    public function buildNilMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "Nil") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "Nil") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        {
+            $string = new ClassInstance("String");
+            $string->setValue("nil");
+            return $string;
+        });
+
+        $class->addBuiltinMethod("isNil", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->trueInstance();
+        });
+    }
+
+    // TODO: what if the second object is not a number? -- exception wrong Argument?
+
+    public function buildIntegerMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($receiver->getValue() !== null && $object->getValue() !== null) {
+                $equal = $receiver->getValue() === $object->getValue();
+                if ($equal) {
+                    return $this->trueInstance();
+                }
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("greaterThan:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            // This allows implicit PHP conversions also in SOL25
+            if (!is_numeric($object->getValue())){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
+            if ($receiver->getValue() > $object->getValue()) {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("plus:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if (!is_numeric($object->getValue())){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
+            $result = new ClassInstance("Integer");
+            $result->setValue($receiver->getValue() + $object->getValue());
+            return $result;
+        });
+
+        $class->addBuiltinMethod("minus:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if (!is_numeric($object->getValue())){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
+            $result = new ClassInstance("Integer");
+            $result->setValue($receiver->getValue() - $object->getValue());
+            return $result;
+        });
+
+        $class->addBuiltinMethod("multiplyBy:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if (!is_numeric($object->getValue())){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
+            $result = new ClassInstance("Integer");
+            $result->setValue($receiver->getValue() * $object->getValue());
+            return $result;
+        });
+
+        $class->addBuiltinMethod("divBy:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if (!is_numeric($object->getValue())){
+                throw new IncorrectArgumentException("Incorrect argument value/type");
+            }
+
+            if ($object->getValue() !== 0){
+                $result = new ClassInstance("Integer");
+                $result->setValue(intdiv((int)$receiver->getValue(), (int)$object->getValue()));
+                return $result;
+            }
+            else{
+                throw new IncorrectArgumentException("Division by zero");
+            }
+        });
+
+        $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        {
+            $string = new ClassInstance("String");
+            if ($receiver->getValue() !== null){
+                $string->setValue((string)$receiver->getValue());
+            }
+            else{
+                $string->setValue("0");
+            }
+            return $string;
+        });
+
+        $class->addBuiltinMethod("isNumber", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->trueInstance();
+        });
+
+        $class->addBuiltinMethod("asInteger", function(ClassInstance $receiver): ClassInstance
+        {
+            return $receiver;
+        });
+
+        $class->addBuiltinMethod("timesRepeat:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            $repeat_times = $receiver->getValue();
+
+            // Default return value if for doesn't run
+            $retrn_value = new ClassInstance("Nil");
+            $retrn_value->setValue(null);
+
+            $obj_type = $object->getClassName();
+
+            // Not a block, but something that understand 'value:' message (hopefully)
+            if ($obj_type !== "Object"){
+                $argument = new ClassInstance("Integer");
+                $argument->setValue(0);
+
+                if ($repeat_times > 0) {
+                    for ($i = 1; $i <= $repeat_times; $i++) {
+                        $argument->setValue($i);
+                        $retrn_value = $block->invokeInstanceMethod($object, "value:", [$argument]);
+                    }
+                    return $retrn_value;
+                }
+            }
+
+            if ($repeat_times > 0) {
+                $block_node = $object->getValue();
+
+                $argument = new ClassInstance("Integer");
+                $argument->setValue(0);
+
+                for ($i = 1; $i <= $repeat_times; $i++) {
+                    $argument->setValue($i);
+                    $block->processBlock($block_node, [$argument]);
+
+                    $retrn_value = $block->getReturnValue();
+                }
+            }
+            return $retrn_value;
+        });
+    }
+
+    public function buildStringMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($receiver->getValue() !== null && $object->getValue() !== null) {
+                $equal = $receiver->getValue() === $object->getValue();
+                if ($equal) {
+                    return $this->trueInstance();
+                }
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("isString", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->trueInstance();
+        });
+
+        $class->addBuiltinMethod("print", function(ClassInstance $receiver): ClassInstance
+        {
+            $stdout = Interpreter::getStdoutWriter();
+            if ($stdout && $receiver->getValue() !== null) {
+                $stdout->writeString($receiver->getValue());
+            }
+            return $receiver;
+        });
+
+        $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        {
+            return $receiver;
+        });
+
+        $class->addBuiltinMethod("asInteger", function(ClassInstance $receiver): ClassInstance
+        {
+            if (!is_numeric($receiver->getValue())){
+                $nil = new ClassInstance("Nil");
+                $nil->setValue(null);
+                return $nil;    
+            }
+            else{
+                $integer = new ClassInstance("Integer");
+                $integer->setValue((int)$receiver->getValue());
+                return $integer;
+            }
+        });
+
+        $class->addBuiltinMethod("concatenateWith:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            $arg_type = $object->getClassName();
+            if (!ClassDefinition::isInstanceOf($arg_type, "String")){
+                $nil = new ClassInstance("Nil");
+                $nil->setValue(null);
+                return $nil;
+            }
+
+            $string = new ClassInstance("String");
+            $string->setValue($receiver->getValue() . $object->getValue());
+            return $string;
+        });
+
+        $class->addBuiltinMethod("startsWith:endsBefore:", function(ClassInstance $receiver, ClassInstance $from, ClassInstance $to): ClassInstance
+        {
+            if ($receiver->getValue() !== null && $from->getValue() !== null && $to->getValue() !== null) {
+                $start = $from->getValue();
+                $end = $to->getValue();
+
+                if ($start < 1 || $end < 1 || $end > strlen($receiver->getValue())+1) {
+                    $nil = new ClassInstance("Nil");
+                    $nil->setValue(null);
+                    return $nil;
+                }
+
+                $string = new ClassInstance("String");
+
+                if ($start >= $end) {
+                    $string->setValue("");
+                    return $string;
+                }
+
+                $substring = substr($receiver->getValue(), $start-1, $end-$start);
+                $string->setValue($substring);
+                return $string;
+            }
+
+            $nil = new ClassInstance("Nil");
+            $nil->setValue(null);
+            return $nil;
+        });
+    }
+
+    public function buildBlockMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("isBlock", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->trueInstance();
+        });
+
+        $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
+        {
+            $block_node = $receiver->getValue();
+            $block->processBlock($block_node, []);
+            $result = $block->getReturnValue();
+            return $result;
+        });
+
+        $class->addBuiltinMethod("value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1): ClassInstance
+        {
+            $block_node = $receiver->getValue();
+            $block->processBlock($block_node, [$arg1]);
+            $result = $block->getReturnValue();
+            return $result;
+        });
+
+        $class->addBuiltinMethod("value:value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1, ClassInstance $arg2): ClassInstance
+        {
+            $block_node = $receiver->getValue();
+            $block->processBlock($block_node, [$arg1, $arg2]);
+            $result = $block->getReturnValue();
+            return $result;
+        });
+
+        $class->addBuiltinMethod("value:value:value:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $arg1, ClassInstance $arg2, ClassInstance $arg3): ClassInstance
+        {
+            $block_node = $receiver->getValue();
+            $block->processBlock($block_node, [$arg1, $arg2, $arg3]);
+            $result = $block->getReturnValue();
+            return $result;
+        });
+
+        $class->addBuiltinMethod("whileTrue:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            // Default return value if for doesn't run
+            $ret_val = new ClassInstance("Nil");
+            $ret_val->setValue(null);
+
+            // Get the block node from the XML that represents the condition
+            $condition_node = $receiver->getValue();
+
+            $obj_type = $object->getClassName();
+            // Sends 'value:' message instead
+            if ($obj_type !== "Object") {
+                while(true) {
+                    // Check if condition is true
+                    $block->processBlock($condition_node, []);
+                    $result = $block->getReturnValue();
+    
+                    if ($result === null || $result->getClassName() !== "True") {
+                        break;
+                    }
+
+                    // Send value message if condition was true
+                    $ret_val = $block->invokeInstanceMethod($object, "value", []);
+                }
+                return $ret_val;
+            }
+
+            $execute_node = $object->getValue();
+
+            while(true) {
+                // Check if condition is true
+                $block->processBlock($condition_node, []);
+                $result = $block->getReturnValue();
+
+                if ($result === null || $result->getClassName() !== "True") {
+                    break;
+                }
+                // Execute the block if condition was true
+                $block->processBlock($execute_node, []);
+                $ret_val = $block->getReturnValue();
+            }
+
+            return $ret_val;
+        });
+    }
+
+    public function buildTrueMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "True") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "True") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("not", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("and:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            $ret_val= $block->invokeInstanceMethod($object, "value", []);
+            return $ret_val;
+        });
+
+        $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
+        {
+            $true = new ClassInstance("True");
+            $true->setValue(true);
+            return $true;
+        });
+
+        $class->addBuiltinMethod("or:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            return $receiver;
+        });
+
+        $class->addBuiltinMethod("ifTrue:ifFalse:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $true_object, ClassInstance $false_object): ClassInstance
+        {
+            // Get the block node from the XML that is to be processed
+            $block_node = $true_object->getValue();
+
+            // Process the block
+            $block->processBlock($block_node, []);
+            $ret_val = $block->getReturnValue();
+            return $ret_val;
+        });
+
+        // TODO: not in spec
+        // $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        // {
+        //     $string = new ClassInstance("String");
+        //     $string->setValue("true");
+        //     return $string;
+        // });
+    }
+
+    public function buildFalseMethods(ClassDefinition $class): void
+    {
+        $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "False") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            if ($object->getClassName() === "False") {
+                return $this->trueInstance();
+            }
+            return $this->falseInstance();
+        });
+
+        $class->addBuiltinMethod("not", function(ClassInstance $receiver): ClassInstance
+        {
+            return $this->trueInstance();
+        });
+
+        $class->addBuiltinMethod("and:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            return $receiver;
+        });
+
+        $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
+        {
+            $false = new ClassInstance("False");
+            $false->setValue(false);
+            return $false;
+        });
+
+        $class->addBuiltinMethod("or:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
+        {
+            $ret_val = $block->invokeInstanceMethod($object, "value", []);
+            return $ret_val;
+        });
+
+        $class->addBuiltinMethod("ifTrue:ifFalse:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $true_object, ClassInstance $false_object): ClassInstance
+        {
+            // Get the block node from the XML that is to be processed
+            $block_node = $false_object->getValue();
+
+            // Process the block
+            $block->processBlock($block_node, []);
+            $ret_val = $block->getReturnValue();
+            return $ret_val;
+        });
+
+        // TODO: not in spec
+        // $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
+        // {
+        //     $string = new ClassInstance("String");
+        //     $string->setValue("false");
+        //     return $string;
+        // });
+    }
+}

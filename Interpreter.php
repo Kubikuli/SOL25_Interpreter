@@ -6,12 +6,17 @@ use IPP\Core\AbstractInterpreter;
 use IPP\Core\Interface\InputReader;
 use IPP\Core\Interface\OutputWriter;
 use IPP\Core\ReturnCode;
+use IPP\Student\Exception\MessageDNUException;
 use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
 use IPP\Student\Exception\MissingMainRunException;
 
 // Super implementation - Cant use __SUPER__ as string value
 // TODO: other stuff shouuld understand value: messages other then Block class maybe
+    // $val = $this->input->readString();
+    // $this->stdout->writeString("stdout");
+    // $this->stderr->writeString("stderr");
+
 
 class Interpreter extends AbstractInterpreter
 {
@@ -21,7 +26,7 @@ class Interpreter extends AbstractInterpreter
     // design because I couldn't access this and I found out too late I needed it
 
     // Add a method to access the input reader
-    public static function get_input_reader(): ?InputReader
+    public static function getInputReader(): ?InputReader
     {
         if (isset(self::$instance)) {
             return self::$instance->input;
@@ -30,7 +35,7 @@ class Interpreter extends AbstractInterpreter
     }
 
     // Add a method to access the input reader
-    public static function get_stdout_writer(): ?OutputWriter
+    public static function getStdoutWriter(): ?OutputWriter
     {
         if (isset(self::$instance)) {
             return self::$instance->stdout;
@@ -40,7 +45,7 @@ class Interpreter extends AbstractInterpreter
 
     // TODO: maybe remove this
     // Add a method to access the input reader
-    public static function get_stderr_writer(): ?OutputWriter
+    public static function getStderrWriter(): ?OutputWriter
     {
         if (isset(self::$instance)) {
             return self::$instance->stderr;
@@ -48,13 +53,8 @@ class Interpreter extends AbstractInterpreter
         return null;
     }
     
-
     public function execute(): int
     {
-        // $val = $this->input->readString();
-        // $this->stdout->writeString("stdout");
-        // $this->stderr->writeString("stderr");
-
         self::$instance = $this;
 
         $dom = $this->source->getDOMDocument();
@@ -64,61 +64,63 @@ class Interpreter extends AbstractInterpreter
         $parser->parse($dom);
 
         // Insert built-in class definitions
-        $this->define_builtin_classes();
+        $this->defineBuiltinClasses();
 
         // Execute "run" method from "Main"
-        $this->execute_method("Main", "run", []);
+        $this->executeRunMethod("Main", "run", []);
 
         return ReturnCode::OK;
     }
 
     /**
-     * @param array<Class_instance> $args Arguments for the method call
+     * @param array<ClassInstance> $args Arguments for the method call
      */
-    private function execute_method(string $class_name, string $method_name, array $args): void
+    private function executeRunMethod(string $class_name, string $method_name, array $args): void
     {
-        // Check if given method in given class exists
-        $method = Class_definition::get_method($class_name, $method_name);
-        if ($method === null){
-            throw new MissingMainRunException("Class not found: " . $class_name . " or method not found: " . $method_name);
-        }
+        $method = ClassDefinition::getMethod($class_name, $method_name);
 
         // Main class instance
-        $main_class = new Class_instance($class_name);
-        $block = new Method_block();
+        $main_class = new ClassInstance($class_name);
+        $block = new MethodBlock();
 
-        $block->set_variable("self", $main_class);
+        $block->setVariable("self", $main_class);
 
-        $child = $method->getElementsByTagName("block")->item(0);
-
-        // Skip the method node and send block node as argument
-        $block->process_block($child, $args);
+        // Check if given class understands given message
+        if ($method instanceof \DOMElement){
+            $child = $method->getElementsByTagName("block")->item(0);
+            // Skip the method node and send block node as argument
+            $block->processBlock($child, $args);
+        }
+        else{
+            // If method is not defined in given class
+            throw new MissingMainRunException("Class not found: " . $class_name . " or method not found: " . $method_name);
+        }
     }
 
     // Defines built-in classes with their definitions
-    private function define_builtin_classes(): void
+    private function defineBuiltinClasses(): void
     {
-        $built_in_builder = new Method_builder();
+        $built_in_builder = new BuiltinMethodBuilder();
 
-        $class = new Class_definition("Object");
-        $built_in_builder->build_object_methods($class);
+        $class = new ClassDefinition("Object");
+        $built_in_builder->buildObjectMethods($class);
 
-        $class = new Class_definition("Nil", "Object");
-        $built_in_builder->build_nil_methods($class);
+        $class = new ClassDefinition("Nil", "Object");
+        $built_in_builder->buildNilMethods($class);
 
-        $class = new Class_definition("Integer", "Object");
-        $built_in_builder->build_integer_methods($class);
+        $class = new ClassDefinition("Integer", "Object");
+        $built_in_builder->buildIntegerMethods($class);
 
-        $class = new Class_definition("String", "Object");
-        $built_in_builder->build_string_methods($class);
+        $class = new ClassDefinition("String", "Object");
+        $built_in_builder->buildStringMethods($class);
 
-        $class = new Class_definition("Block", "Object");
-        $built_in_builder->build_block_methods($class);
+        $class = new ClassDefinition("Block", "Object");
+        $built_in_builder->buildBlockMethods($class);
 
-        $class = new Class_definition("True", "Object");
-        $built_in_builder->build_true_methods($class);
+        $class = new ClassDefinition("True", "Object");
+        $built_in_builder->buildTrueMethods($class);
 
-        $class = new Class_definition("False", "Object");
-        $built_in_builder->build_false_methods($class);
+        $class = new ClassDefinition("False", "Object");
+        $built_in_builder->buildFalseMethods($class);
     }
 }

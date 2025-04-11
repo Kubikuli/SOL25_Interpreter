@@ -8,40 +8,44 @@ use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
 use IPP\Student\Exception\UsingUndefinedException;
 
-class Method_block
+class MethodBlock
 {
     /**
-     * @var array<string, Class_instance> List of variables of current block
+     * @var array<string, ClassInstance> List of variables of current block
      */
     protected array $variables = [];    
     protected mixed $return_value = null;    // return value of the method
 
-    public function set_return_value(Class_instance $value): void
+    public function setReturnValue(ClassInstance $value): void
     {
         $this->return_value = $value;
     }
 
-    public function get_return_value(): mixed
+    public function getReturnValue(): mixed
     {
         return $this->return_value;
     }
 
-    public function set_variable(string $name, Class_instance $value): void
+    public function setVariable(string $name, ClassInstance $value): void
     {
         $this->variables[$name] = $value;
     }
 
-    public function get_variable(string $name): ?Class_instance
+    public function getVariable(string $name): ?ClassInstance
     {
         return $this->variables[$name] ?? null;
     }
 
     // ********************** BLOCK PROCESSING ***********************
     /**
-     * @param array<Class_instance> $args Arguments given to the block
+     * @param array<ClassInstance> $args Arguments given to the block
      */
-    public function process_block(\DOMElement $block_node, array $args): void
+    public function processBlock(?\DOMElement $block_node, array $args): void
     {
+        if ($block_node === null){
+            throw new UnexpectedXMLFormatException("Malformed XML format.");
+        }
+
         // Assign argument values to parameters
         foreach ($block_node->childNodes as $child_node) {
             if ($child_node instanceof \DOMElement) {
@@ -51,16 +55,16 @@ class Method_block
                     $order = (int)$child_node->getAttribute("order");
                     $par_name = $child_node->getAttribute("name");
 
-                    $this->set_variable($par_name, $args[$order-1]);
+                    $this->setVariable($par_name, $args[$order-1]);
                 }
             }
         }
 
-        $this->process_assignments($block_node);
+        $this->processAssignments($block_node);
     }
 
     // ************************* ASSIGN PROCESSING **************************
-    private function process_assignments(\DOMElement $block_node): void
+    private function processAssignments(\DOMElement $block_node): void
     {
         $order = 0;
         $new_order = 1;
@@ -90,7 +94,7 @@ class Method_block
                                     }
                                     // Get value to be assigned
                                     else if($grand_child_node->tagName === "expr"){
-                                        $result = $this->evaluate_expr($grand_child_node);
+                                        $result = $this->evaluateExpr($grand_child_node);
                                     }
                                 }
                             }
@@ -101,8 +105,8 @@ class Method_block
                             }
 
                             // Assign value to the variable
-                            $this->set_variable($var_name, $result);
-                            $this->set_return_value($result);
+                            $this->setVariable($var_name, $result);
+                            $this->setReturnValue($result);
                         }
                     }
                 }
@@ -111,7 +115,7 @@ class Method_block
     }
 
     // *************************** EXPR PROCESSING ****************************
-    private function evaluate_expr(\DOMElement $expr_node): Class_instance|string
+    private function evaluateExpr(\DOMElement $expr_node): ClassInstance|string
     {
         // Skip expr node
         $expression = $expr_node;
@@ -134,8 +138,8 @@ class Method_block
             case "send":
                 return $this->evaluateMessageSend($expression);
             case "block":
-                $block = new Class_instance("Block");
-                $block->set_value($expression);
+                $block = new ClassInstance("Block");
+                $block->setValue($expression);
                 return $block;
             default:
                 throw new InterpretException("Unknown expression type: " . $elem_type);
@@ -143,31 +147,31 @@ class Method_block
     }
 
     // *************************** LITERAL PROCESSING ****************************
-    private function evaluateLiteral(\DOMElement $literal_node): Class_instance|string
+    private function evaluateLiteral(\DOMElement $literal_node): ClassInstance|string
     {
         $value = $literal_node->getAttribute("value");
         $type = $literal_node->getAttribute("class");
 
         switch ($type) {
             case "Integer":
-                $integer = new Class_instance("Integer");
-                $integer->set_value((int)$value);
+                $integer = new ClassInstance("Integer");
+                $integer->setValue((int)$value);
                 return $integer;
             case "String":
-                $string = new Class_instance("String");
-                $string->set_value($value);
+                $string = new ClassInstance("String");
+                $string->setValue($value);
                 return $string;
             case "True":
-                $tru = new Class_instance("True");
-                $tru->set_value(true);
+                $tru = new ClassInstance("True");
+                $tru->setValue(true);
                 return $tru;
             case "False":
-                $false = new Class_instance("False");
-                $false->set_value(false);
+                $false = new ClassInstance("False");
+                $false->setValue(false);
                 return $false;
             case "Nil":
-                $nil = new Class_instance("Nil");
-                $nil->set_value(null);
+                $nil = new ClassInstance("Nil");
+                $nil->setValue(null);
                 return $nil;
             case "class":
                 return $value;  // name of the class that's instance is to be created
@@ -177,7 +181,7 @@ class Method_block
     }
 
     // *************************** VAR PROCESSING ****************************
-    private function evaluateVariable(\DOMElement $var_node): Class_instance
+    private function evaluateVariable(\DOMElement $var_node): ClassInstance
     {
         $var_name = $var_node->getAttribute("name");
 
@@ -185,15 +189,15 @@ class Method_block
 
         if ($var_name === "super") {
             // Those next 3 commands get name of parent of current class
-            $self_instance = $this->get_variable("self");    // instance of self (= current class)
-            $self_type = $self_instance->get_class_name();   // type of self instance
-            $parent_class = Class_definition::get_class($self_type)->get_parent_name(); // name of self's parent class
+            $self_instance = $this->getVariable("self");    // instance of self (= current class)
+            $self_type = $self_instance->getClassName();   // type of self instance
+            $parent_class = ClassDefinition::getClass($self_type)->getParentName(); // name of self's parent class
 
-            $value = new Class_instance($parent_class);
-            $value->set_value("__SUPER__");
+            $value = new ClassInstance($parent_class);
+            $value->setValue("__SUPER__");
         }
         else{
-            $value = $this->get_variable($var_name);
+            $value = $this->getVariable($var_name);
         }
 
         if ($value === null) {
@@ -204,10 +208,10 @@ class Method_block
     }
 
     // *************************** SEND PROCESSING *****************************
-    private function evaluateMessageSend(\DOMElement $send_node): Class_instance
+    private function evaluateMessageSend(\DOMElement $send_node): ClassInstance
     {
         // Get arguments for message send
-        $args = $this->get_args($send_node);
+        $args = $this->getArgs($send_node);
 
         // Message selector
         $selector = $send_node->getAttribute("selector");
@@ -223,25 +227,25 @@ class Method_block
             }
         }
                 
-        $receiver = $this->evaluate_expr($expr_node);
+        $receiver = $this->evaluateExpr($expr_node);
 
         // $receiver is string only when sending a class method meaning creating a new class instance
         if (is_string($receiver)){
-            $result = $this->invoke_class_method($receiver, $selector, $args);
+            $result = $this->invokeClassMethod($receiver, $selector, $args);
             return $result;
         }
         // Normal method call
         else{
-            $result = $this->invoke_instance_method($receiver, $selector, $args);
+            $result = $this->invokeInstanceMethod($receiver, $selector, $args);
             return $result;
         }
     }
 
     // **************************** ARG PROCESSING *****************************
     /**
-     * @return array<Class_instance> List of all arguments found
+     * @return array<ClassInstance> List of all arguments found
      */
-    private function get_args(\DOMElement $send_node): array
+    private function getArgs(\DOMElement $send_node): array
     {
         $args = [];
         foreach ($send_node->childNodes as $arg_node) {
@@ -250,7 +254,7 @@ class Method_block
                     // Get the argument value
                     $order = (int)$arg_node->getAttribute("order");
                     $expr_node = $arg_node->getElementsByTagName("expr")->item(0);
-                    $args[$order-1] = $this->evaluate_expr($expr_node);
+                    $args[$order-1] = $this->evaluateExpr($expr_node);
                 }
             }
         }
@@ -259,41 +263,41 @@ class Method_block
 
     // ************************* INVOKING CLASS INSTANCE CONSTRUCTOR *************************
     /**
-     * @param array<Class_instance> $args Arguments given to the block
+     * @param array<ClassInstance> $args Arguments given to the block
      */
-    private function invoke_class_method(string $receiver, string $selector, array $args): Class_instance
+    private function invokeClassMethod(string $receiver, string $selector, array $args): ClassInstance
     {
         switch ($selector) {
             case "new":
                 // Just creates a new pure class instance
-                $new_class = new Class_instance($receiver);
+                $new_class = new ClassInstance($receiver);
 
                 // Set default value
-                if (Class_definition::is_instance_of($receiver, "Integer")) {
-                    $new_class->set_value(0);
+                if (ClassDefinition::isInstanceOf($receiver, "Integer")) {
+                    $new_class->setValue(0);
                 }
-                else if (Class_definition::is_instance_of($receiver, "String")) {
-                    $new_class->set_value("");
+                else if (ClassDefinition::isInstanceOf($receiver, "String")) {
+                    $new_class->setValue("");
                 }
-                else if (Class_definition::is_instance_of($receiver, "True")) {
-                    $new_class->set_value(true);
+                else if (ClassDefinition::isInstanceOf($receiver, "True")) {
+                    $new_class->setValue(true);
                 }
-                else if (Class_definition::is_instance_of($receiver, "False")) {
-                    $new_class->set_value(false);
+                else if (ClassDefinition::isInstanceOf($receiver, "False")) {
+                    $new_class->setValue(false);
                 }
-                else if (Class_definition::get_class($receiver) === null) {
+                else if (ClassDefinition::getClass($receiver) === null) {
                     throw new UsingUndefinedException("Trying to create instance of undefined class: " . $receiver);
                 }
                 // Rest of the classes dont use internal value so we are not setting anyhting
                 return $new_class;
 
             case "from:":
-                $new_class = new Class_instance($receiver);
+                $new_class = new ClassInstance($receiver);
                 if (isset($args[0])) {
                     $arg = $args[0];
                     // If they are the same class type or one is instance of the other
-                    if ($arg->is_instance_of($receiver) || $new_class->is_instance_of($arg->get_class_name())) {
-                        $arg->copy_values($new_class);
+                    if ($arg->isInstanceOf($receiver) || $new_class->isInstanceOf($arg->getClassName())) {
+                        $arg->copyValues($new_class);
                     }
                     else {
                         throw new IncorrectArgumentException("Invalid class type for 'from:' " . $receiver);
@@ -307,16 +311,16 @@ class Method_block
 
             case "read":
                 // Check if given class is instance of built-in String class 
-                if (Class_definition::is_instance_of($receiver, "String") === false) {
+                if (ClassDefinition::isInstanceOf($receiver, "String") === false) {
                     throw new UsingUndefinedException("This class doesn't understand 'read' message: " . $receiver);
                 }
 
                 // Create a new instance and initialize it with value from input
-                $string = new Class_instance($receiver);
+                $string = new ClassInstance($receiver);
                 // Use the input reader
-                $inputReader = Interpreter::get_input_reader();
+                $inputReader = Interpreter::getInputReader();
                 $value = $inputReader ? $inputReader->readString() : "";
-                $string->set_value($value);
+                $string->setValue($value);
                 return $string;
             default:
                 throw new UsingUndefinedException("Do not understand this class method: " . $selector);
@@ -325,16 +329,16 @@ class Method_block
 
     // ************************** INVOKING CLASS INSTANCE METHODS **************************
     /**
-     * @param array<Class_instance> $args Arguments to be send with message
+     * @param array<ClassInstance> $args Arguments to be send with message
      */
-    public function invoke_instance_method(Class_instance $receiver, string $selector, array $args): Class_instance
+    public function invokeInstanceMethod(ClassInstance $receiver, string $selector, array $args): ClassInstance
     {
         // Get the method from the class definition
-        $method = Class_definition::get_method($receiver->get_class_name(), $selector);
+        $method = ClassDefinition::getMethod($receiver->getClassName(), $selector);
 
         // ^^^ finds correct method but the receiver should be self instance (if __SUPER__ is used)
-        if ($receiver->get_value() === "__SUPER__"){
-            $receiver = $this->get_variable("self");
+        if ($receiver->getValue() === "__SUPER__"){
+            $receiver = $this->getVariable("self");
         }
 
         // Didn't find coresponding method in the class
@@ -343,7 +347,7 @@ class Method_block
 
             // 0 arguments unknown message means getting value of attribute or error if no such attribute exists
             if ($num_of_args === 0){
-                $result = $receiver->get_attribute($selector);
+                $result = $receiver->getAttribute($selector);
                 if ($result === null) {
                     throw new MessageDNUException("Unknown attribute/method: " . $selector);
                 }
@@ -353,7 +357,7 @@ class Method_block
             else if ($num_of_args === 1){
 
                 $attrib_name = substr($selector, 0, -1);    // get rid of the trailing ':'
-                $receiver->set_attribute($attrib_name, $args[0]);
+                $receiver->setAttribute($attrib_name, $args[0]);
 
                 return $receiver;
             }
@@ -364,19 +368,19 @@ class Method_block
         // Method found
         // User defined method
         else if ($method instanceof \DOMElement) {
-            $block = new Method_block();
-            $block->set_variable("self", $receiver);
+            $block = new MethodBlock();
+            $block->setVariable("self", $receiver);
 
             // Process the block with the arguments
             $block_node = $method->getElementsByTagName("block")->item(0);
 
-            $block->process_block($block_node, $args);
+            $block->processBlock($block_node, $args);
 
-            $return_val = $block->get_return_value();
+            $return_val = $block->getReturnValue();
 
             if ($return_val === null) {
-                $return_val = new Class_instance("Nil");
-                $return_val->set_value(null);
+                $return_val = new ClassInstance("Nil");
+                $return_val->setValue(null);
             }
 
             return $return_val;
@@ -396,9 +400,9 @@ class Method_block
                 case "and:":
                 case "or:":
                     // Those methods need new block instance with self variable set
-                    $block = new Method_block();
-                    $real_self = $this->get_variable("self");
-                    $block->set_variable("self", $real_self);
+                    $block = new MethodBlock();
+                    $real_self = $this->getVariable("self");
+                    $block->setVariable("self", $real_self);
 
                     $result = $method($block, $receiver, ...$args);
                     break;
@@ -410,4 +414,4 @@ class Method_block
             return $result;
         }
     }
-}   // class Method_block
+}   // class MethodBlock

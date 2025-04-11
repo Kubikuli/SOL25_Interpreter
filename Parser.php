@@ -12,25 +12,25 @@ class Parser
     public function parse(\DOMDocument $dom): void
     {
         if ($dom->documentElement !== null) {
-            $this->parse_classes($dom->documentElement);
+            $this->parseClasses($dom->documentElement);
         }
     }
 
     // Creates an instance for each user-defined class and sets all attributes
-    private function parse_classes(\DOMElement $program_node): void {
+    private function parseClasses(\DOMElement $program_node): void {
         foreach ($program_node->getElementsByTagName("class") as $class_node) {
             $class_name = $class_node->getAttribute("name");
             $parent_name = $class_node->getAttribute("parent");
 
-            $class = new Class_definition($class_name, $parent_name);
+            $class = new ClassDefinition($class_name, $parent_name);
 
             // Extract methods
-            $this->parse_methods($class_node, $class);
+            $this->parseMethods($class_node, $class);
         }
     }
 
     // Gets all methods of the class and their parameters with correct order
-    private function parse_methods(\DOMElement $class_node, Class_definition $class): void {
+    private function parseMethods(\DOMElement $class_node, ClassDefinition $class): void {
         foreach ($class_node->getElementsByTagName("method") as $method_node) {
             $method_name = $method_node->getAttribute("selector");
             $parameters = [];
@@ -41,7 +41,7 @@ class Parser
             }
     
             // Store method with its instructions
-            $class->add_method($method_name, $method_node);
+            $class->addMethod($method_name, $method_node);
         }
     }
 }

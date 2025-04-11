@@ -4,12 +4,12 @@ namespace IPP\Student;
 
 
 // Each instance represents instance of user defined class
-class Class_instance
+class ClassInstance
 {
     protected string $class_name;   // class type of the instance
     protected mixed $value;       // intern value attribute used only by built-in classes
     /**
-     * @var array<string, Class_instance> List of attributes of the instance
+     * @var array<string, ClassInstance> List of attributes of the instance
      */
     protected array $attributes;
 
@@ -21,49 +21,49 @@ class Class_instance
     }
 
     // Sets new attribute to the instance
-    public function set_attribute(string $name, Class_instance $value): void
+    public function setAttribute(string $name, ClassInstance $value): void
     {
         $this->attributes[$name] = $value;
     }
 
     // Gets attribute value of the instance
-    public function get_attribute(string $name): ?Class_instance
+    public function getAttribute(string $name): ?ClassInstance
     {
         return $this->attributes[$name] ?? null;
     }
 
-    public function set_value(mixed $value): void
+    public function setValue(mixed $value): void
     {
         $this->value = $value;
     }
 
-    public function get_value(): mixed
+    public function getValue(): mixed
     {
         return $this->value ?? null;
     }
 
-    public function get_class_name(): string
+    public function getClassName(): string
     {
         return $this->class_name;
     }
 
-    public function is_instance_of(string $possible_parent): bool
+    public function isInstanceOf(string $possible_parent): bool
     {
         if ($this->class_name === $possible_parent){
             return true;
         }
 
-        $possible_parent_instance = Class_definition::get_class($possible_parent);
-        $class = Class_definition::get_class($this->class_name);
+        $possible_parent_instance = ClassDefinition::getClass($possible_parent);
+        $class = ClassDefinition::getClass($this->class_name);
 
         while(true){
-            $parent_name = $class->get_parent_name();
+            $parent_name = $class->getParentName();
 
             if ($parent_name === "Object" || $parent_name === ""){
                 break;
             }
 
-            $parent_instance = Class_definition::get_class($parent_name);
+            $parent_instance = ClassDefinition::getClass($parent_name);
 
             if ($parent_instance === null){
                 break;
@@ -77,9 +77,9 @@ class Class_instance
         return false;
     }
 
-    public function copy_values(Class_instance $instance): void
+    public function copyValues(ClassInstance $instance): void
     {
-        $instance->set_value($this->value);
+        $instance->setValue($this->value);
 
         foreach ($this->attributes as $key => $value) {
             $instance->attributes[$key] = $value;
