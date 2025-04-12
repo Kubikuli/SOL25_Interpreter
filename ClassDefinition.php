@@ -2,7 +2,7 @@
 
 namespace IPP\Student;
 
-use IPP\Student\Exception\UsingUndefinedException;
+use IPP\Student\Exception\InterpretException;
 
 // Each instance represents user defined class
 class ClassDefinition
@@ -37,7 +37,7 @@ class ClassDefinition
     {
         // Search for the class in the list of instances
         if (!isset(self::$instances[$class_name])) {
-            throw new UsingUndefinedException("Undefined class: " . $class_name);
+            throw new InterpretException("Undefined class: " . $class_name);
         }
 
         return self::$instances[$class_name];

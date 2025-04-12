@@ -515,13 +515,6 @@ class BuiltinMethodBuilder
             return $ret_val;
         });
 
-        $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
-        {
-            $true = new ClassInstance("True");
-            $true->setValue(true);
-            return $true;
-        });
-
         $class->addBuiltinMethod("or:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
             return $receiver;
@@ -576,13 +569,6 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("and:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
             return $receiver;
-        });
-
-        $class->addBuiltinMethod("value", function(MethodBlock $block, ClassInstance $receiver): ClassInstance
-        {
-            $false = new ClassInstance("False");
-            $false->setValue(false);
-            return $false;
         });
 
         $class->addBuiltinMethod("or:", function(MethodBlock $block, ClassInstance $receiver, ClassInstance $object): ClassInstance

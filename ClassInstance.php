@@ -2,8 +2,6 @@
 
 namespace IPP\Student;
 
-use IPP\Student\Exception\UsingUndefinedException;
-
 // Each instance represents instance of user defined class
 class ClassInstance
 {
