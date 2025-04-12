@@ -3,6 +3,7 @@
 namespace IPP\Student;
 
 use IPP\Student\Exception\IncorrectArgumentException;
+use IPP\Student\Exception\MessageDNUException;
 
 class BuiltinMethodBuilder
 {
@@ -111,8 +112,6 @@ class BuiltinMethodBuilder
         });
     }
 
-    // TODO: what if the second object is not a number? -- exception wrong Argument?
-
     public function buildIntegerMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
@@ -128,8 +127,8 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("greaterThan:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            // This allows implicit PHP conversions also in SOL25
-            if (!is_numeric($object->getValue())){
+            // This doesn't allow implicit PHP conversions in SOL25
+            if (!is_int($object->getValue())){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
@@ -144,7 +143,7 @@ class BuiltinMethodBuilder
             $a = $receiver->getValue();
             $b = $object->getValue();
 
-            if (!is_numeric($b) || !is_numeric($a)){
+            if (!is_int($b) || !is_int($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
         
@@ -159,7 +158,7 @@ class BuiltinMethodBuilder
             $b = $object->getValue();
 
             // The second check is just for PHPstan, it will never actually possibly happend
-            if (!is_numeric($b) || !is_numeric($a)){
+            if (!is_int($b) || !is_int($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
@@ -173,7 +172,7 @@ class BuiltinMethodBuilder
             $a = $receiver->getValue();
             $b = $object->getValue();
 
-            if (!is_numeric($b) || !is_numeric($a)){
+            if (!is_int($b) || !is_int($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
@@ -187,7 +186,7 @@ class BuiltinMethodBuilder
             $a = $receiver->getValue();
             $b = $object->getValue();
 
-            if (!is_numeric($b) || !is_numeric($a)){
+            if (!is_int($b) || !is_int($a)){
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
@@ -298,7 +297,8 @@ class BuiltinMethodBuilder
                 $stdout->writeString($msg);
             }
             else{
-                throw new IncorrectArgumentException("Incorrect argument value/type");  // TODO: check exception type
+                // this should never happen, but just in case
+                throw new MessageDNUException("Cant call print on non-string object");
             }
             return $receiver;
         });
@@ -324,17 +324,17 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("concatenateWith:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            $arg_type = $object->getClassName();
-            if (!ClassDefinition::isInstanceOf($arg_type, "String")){
+            $str2 = $object->getValue();
+            if (!is_string($str2)){
                 $nil = new ClassInstance("Nil");
                 $nil->setValue(null);
                 return $nil;
             }
 
             $str1 = $receiver->getValue();
-            $str2 = $object->getValue();
-            if (!is_string($str1) || !is_string($str2)){
-                throw new IncorrectArgumentException("Incorrect argument value/type");      // TODO: check exception type
+            if (!is_string($str1)){
+                // this should never happen, but just in case
+                throw new MessageDNUException("Cant call concatenateWith: on non-string object");
             }
 
             $string = new ClassInstance("String");
@@ -348,7 +348,8 @@ class BuiltinMethodBuilder
                 $original_string = $receiver->getValue();
 
                 if (!is_string($original_string)){
-                    throw new IncorrectArgumentException("Incorrect argument value/type");  // TODO: check what type of exeption to throw
+                    // this should never happen, but just in case
+                    throw new MessageDNUException("Cant call startsWith:endsBefore: on non-string object");
                 }
 
                 $start = $from->getValue();
@@ -442,13 +443,13 @@ class BuiltinMethodBuilder
             // Get the block node from the XML that represents the condition
             $condition_node = $receiver->getValue();
             if (!($condition_node instanceof \DOMElement)){
-                throw new IncorrectArgumentException("Incorrect value of Block class");
+                // this should never happen, but just in case
+                throw new MessageDNUException("Cant call whileTrue: on non-block object");
             }
 
             $obj_type = $object->getClassName();
             // Sends 'value:' message instead
             if ($obj_type !== "Object") {
-    
                 while(true) {
                     // Check if condition is true
                     $block->processBlock($condition_node, []);
