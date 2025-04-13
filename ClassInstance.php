@@ -2,7 +2,7 @@
 
 namespace IPP\Student;
 
-// Each instance represents instance of user defined class
+// Each instance represents instance of a class while interpreting
 class ClassInstance
 {
     protected string $class_name;   // class type of the instance
@@ -46,9 +46,18 @@ class ClassInstance
         return $this->class_name;
     }
 
+    public function copyValues(ClassInstance $instance): void
+    {
+        $instance->setValue($this->value);
+
+        foreach ($this->attributes as $key => $value) {
+            $instance->attributes[$key] = $value;
+        }
+    }
+
     public function isInstanceOf(string $possible_parent): bool
     {
-        if ($this->class_name === $possible_parent){
+        if ($this->class_name === $possible_parent) {
             return true;
         }
 
@@ -58,26 +67,17 @@ class ClassInstance
         while(true){
             $parent_name = $class->getParentName();
 
-            if ($parent_name === "Object" || $parent_name === ""){
+            if ($parent_name === "Object" || $parent_name === "") {
                 break;
             }
 
             $parent_instance = ClassDefinition::getClass($parent_name);
 
-            if ($parent_instance === $possible_parent_instance){
+            if ($parent_instance === $possible_parent_instance) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    public function copyValues(ClassInstance $instance): void
-    {
-        $instance->setValue($this->value);
-
-        foreach ($this->attributes as $key => $value) {
-            $instance->attributes[$key] = $value;
-        }
     }
 }

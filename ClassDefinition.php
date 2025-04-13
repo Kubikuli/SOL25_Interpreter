@@ -11,9 +11,11 @@ class ClassDefinition
      * @var array<string, self> List of all it's instances (= all class definitions associated by name)
      */
     static public array $instances = [];
+
     protected string $parent;      // parent class name
+
     /**
-     * @var array<string, \DOMElement|callable> List of instance methods specific for the given class
+     * @var array<string, \DOMElement|callable> List of instance methods specific for the given class, associated by name
      */
     protected array $methods = [];
 
@@ -31,6 +33,18 @@ class ClassDefinition
         return $this->parent;
     }
 
+    // Adds a new method to the class
+    public function addMethod(string $name, \DOMElement $method): void
+    {
+        $this->methods[$name] = $method;
+    }
+
+    // Adds a new built-in method to the class
+    public function addBuiltinMethod(string $name, callable $implementation): void
+    {
+        $this->methods[$name] = $implementation;
+    }
+
     // Searches for the class in the list of instances
     // Returns the definition instance of the class if found, otherwise null
     static public function getClass(string $class_name): ClassDefinition
@@ -43,7 +57,7 @@ class ClassDefinition
         return self::$instances[$class_name];
     }
 
-    // Returns root DOMElement of the method or null if method doesnt exist in given class
+    // Returns root DOMElement of the method or null if method isn't defined for given class
     static public function getMethod(string $class_name, string $method_name): \DOMElement|callable|null
     {
         // Check if the class exists
@@ -61,18 +75,6 @@ class ClassDefinition
 
         // If not found, return null
         return null;
-    }
-
-    // Adds a new method to the class
-    public function addMethod(string $name, \DOMElement $method): void
-    {
-        $this->methods[$name] = $method;
-    }
-
-    // Adds a new built-in method to the class
-    public function addBuiltinMethod(string $name, callable $implementation): void
-    {
-        $this->methods[$name] = $implementation;
     }
 
     public static function isInstanceOf(string $class_name, string $possible_parent): bool

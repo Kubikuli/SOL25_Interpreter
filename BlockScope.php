@@ -8,7 +8,7 @@ use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
 use IPP\Student\Exception\UsingUndefinedException;
 
-class MethodBlock
+class BlockScope
 {
     /**
      * @var array<string, ClassInstance> List of variables of current block
@@ -43,7 +43,7 @@ class MethodBlock
             throw new UsingUndefinedException("Using undefined variable: " . $name);
         }
         return $this->variables[$name];
-        }
+    }
 
     // ********************** BLOCK PROCESSING ***********************
     /**
@@ -388,7 +388,7 @@ class MethodBlock
         // Method found
         // User defined method
         else if ($method instanceof \DOMElement) {
-            $block = new MethodBlock();
+            $block = new BlockScope();
             $block->setVariable("self", $receiver);
 
             // Process the block with the arguments
@@ -412,8 +412,8 @@ class MethodBlock
                 case "ifTrue:ifFalse:":
                 case "and:":
                 case "or:":
-                    // Those methods need new block instance with self variable set
-                    $block = new MethodBlock();
+                    // Those methods need new scope -> block instance with self variable set
+                    $block = new BlockScope();
                     $real_self = $this->getVariable("self");
                     $block->setVariable("self", $real_self);
 
@@ -427,4 +427,4 @@ class MethodBlock
             return $result;
         }
     }
-}   // class MethodBlock
+}   // class BlockScope

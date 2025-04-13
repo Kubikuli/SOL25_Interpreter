@@ -5,7 +5,7 @@ namespace IPP\Student;
 
 class Parser
 {
-    // Parses given DOMDocument and creates instances of 'User_defined_cls'
+    // Parses given DOMDocument and creates instances of 'ClassDefinition' for each user-defined class
     public function parse(\DOMDocument $dom): void
     {
         if ($dom->documentElement !== null) {
@@ -14,7 +14,8 @@ class Parser
     }
 
     // Creates an instance for each user-defined class and sets all attributes
-    private function parseClasses(\DOMElement $program_node): void {
+    private function parseClasses(\DOMElement $program_node): void
+    {
         foreach ($program_node->getElementsByTagName("class") as $class_node) {
             $class_name = $class_node->getAttribute("name");
             $parent_name = $class_node->getAttribute("parent");
@@ -27,7 +28,8 @@ class Parser
     }
 
     // Gets all methods of the class and their parameters with correct order
-    private function parseMethods(\DOMElement $class_node, ClassDefinition $class): void {
+    private function parseMethods(\DOMElement $class_node, ClassDefinition $class): void
+    {
         foreach ($class_node->getElementsByTagName("method") as $method_node) {
             $method_name = $method_node->getAttribute("selector");
             $parameters = [];
@@ -37,7 +39,7 @@ class Parser
                 $parameters[(int)$param_node->getAttribute("order")-1] = $param_node->getAttribute("name");
             }
     
-            // Store method with its instructions
+            // Store method with its definition
             $class->addMethod($method_name, $method_node);
         }
     }

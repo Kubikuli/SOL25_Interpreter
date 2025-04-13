@@ -6,7 +6,6 @@ use IPP\Core\AbstractInterpreter;
 use IPP\Core\Interface\InputReader;
 use IPP\Core\Interface\OutputWriter;
 use IPP\Core\ReturnCode;
-use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
 use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
@@ -21,9 +20,6 @@ use IPP\Student\Exception\UsingUndefinedException;
 class Interpreter extends AbstractInterpreter
 {
     static public Interpreter $instance;
-
-    // Had to do this unfortunatelly this way, because I didn't want to change my whole 
-    // design because I couldn't access this and I found out too late I needed it
 
     // Add a method to access the input reader
     public static function getInputReader(): ?InputReader
@@ -42,16 +38,6 @@ class Interpreter extends AbstractInterpreter
         }
         return null;
     }
-
-    // TODO: maybe remove this
-    // Add a method to access the input reader
-    public static function getStderrWriter(): ?OutputWriter
-    {
-        if (isset(self::$instance)) {
-            return self::$instance->stderr;
-        }
-        return null;
-    }
     
     public function execute(): int
     {
@@ -67,43 +53,41 @@ class Interpreter extends AbstractInterpreter
         $this->defineBuiltinClasses();
 
         // Execute "run" method from "Main"
-        $this->executeRunMethod("Main", "run", []);
+        $this->executeRunMethod();
 
         return ReturnCode::OK;
     }
 
-    /**
-     * @param array<ClassInstance> $args Arguments for the method call
-     */
-    private function executeRunMethod(string $class_name, string $method_name, array $args): void
+    private function executeRunMethod(): void
     {
-        try{
-        // Check if class exists
-        $method = ClassDefinition::getMethod($class_name, $method_name);
+        try {
+            // Check if 'Main' and 'run' are defined
+            $method = ClassDefinition::getMethod("Main", "run");
         }
-        catch (UsingUndefinedException $e){
-            throw new UnexpectedXMLFormatException("Class not found: " . $class_name);
+        catch (UsingUndefinedException) {
+            throw new UnexpectedXMLFormatException("Main class not found.");
         }
 
         // Main class instance
-        $main_class = new ClassInstance($class_name);
-        $block = new MethodBlock();
+        $main_class = new ClassInstance("Main");
+        $block = new BlockScope();
 
+        // In this scope, self references to Main class
         $block->setVariable("self", $main_class);
 
-        // Check if given class understands given message
-        if ($method instanceof \DOMElement){
-            $child = $method->getElementsByTagName("block")->item(0);
+        // Check if 'run' method is defined
+        if ($method instanceof \DOMElement) {
             // Skip the method node and send block node as argument
-            $block->processBlock($child, $args);
+            $block_node = $method->getElementsByTagName("block")->item(0);
+            $block->processBlock($block_node, []);
         }
-        else{
-            // If method is not defined in given class
-            throw new MessageDNUException("Method not found: " . $method_name);
+        else {
+            // 'run' method is not defined
+            throw new MessageDNUException("Run method not found.");
         }
     }
 
-    // Defines built-in classes with their definitions
+    // Defines built-in classes with their built-in methods
     private function defineBuiltinClasses(): void
     {
         $built_in_builder = new BuiltinMethodBuilder();
