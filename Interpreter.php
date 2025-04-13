@@ -8,8 +8,9 @@ use IPP\Core\Interface\OutputWriter;
 use IPP\Core\ReturnCode;
 use PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\MissingColonSniff;
 
-use IPP\Student\Exception\InterpretException;
-
+use IPP\Student\Exception\MessageDNUException;
+use IPP\Student\Exception\UnexpectedXMLFormatException;
+use IPP\Student\Exception\UsingUndefinedException;
 
 // Super implementation - Cant use __SUPER__ as string value
     // $val = $this->input->readString();
@@ -76,8 +77,13 @@ class Interpreter extends AbstractInterpreter
      */
     private function executeRunMethod(string $class_name, string $method_name, array $args): void
     {
+        try{
         // Check if class exists
         $method = ClassDefinition::getMethod($class_name, $method_name);
+        }
+        catch (UsingUndefinedException $e){
+            throw new UnexpectedXMLFormatException("Class not found: " . $class_name);
+        }
 
         // Main class instance
         $main_class = new ClassInstance($class_name);
@@ -93,7 +99,7 @@ class Interpreter extends AbstractInterpreter
         }
         else{
             // If method is not defined in given class
-            throw new InterpretException("Method not found: " . $method_name);
+            throw new MessageDNUException("Method not found: " . $method_name);
         }
     }
 

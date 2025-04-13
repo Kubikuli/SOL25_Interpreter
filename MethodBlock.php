@@ -6,6 +6,7 @@ use IPP\Student\Exception\IncorrectArgumentException;
 use IPP\Student\Exception\InterpretException;
 use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
+use IPP\Student\Exception\UsingUndefinedException;
 
 class MethodBlock
 {
@@ -39,7 +40,7 @@ class MethodBlock
     public function getVariable(string $name): ClassInstance
     {
         if (!isset($this->variables[$name])) {
-            throw new InterpretException("Using undefined variable: " . $name);
+            throw new UsingUndefinedException("Using undefined variable: " . $name);
         }
         return $this->variables[$name];
         }
@@ -331,7 +332,7 @@ class MethodBlock
             case "read":
                 // Check if given class is instance of built-in String class 
                 if (ClassDefinition::isInstanceOf($receiver, "String") === false) {
-                    throw new MessageDNUException("This class doesn't understand 'read' message: " . $receiver);
+                    throw new UsingUndefinedException("This class doesn't understand 'read' message: " . $receiver);
                 }
 
                 // Create a new instance and initialize it with value from input
@@ -342,7 +343,7 @@ class MethodBlock
                 $string->setValue($value);
                 return $string;
             default:
-                throw new MessageDNUException("Do not understand this class method: " . $selector);
+                throw new UsingUndefinedException("Do not understand this class method: " . $selector);
         }
     }
 
