@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * VUT FIT - IPP
+ * @author Jakub Lůčný (xlucnyj00)
+ * @date 2025-04-14
+ * @project IPP project 2 - interpreter for SOL25 language
+ * @brief Base Interpreter class with main execute() method
+ */
+
 namespace IPP\Student;
 
 use IPP\Core\AbstractInterpreter;
@@ -11,17 +19,19 @@ use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
 use IPP\Student\Exception\UsingUndefinedException;
 
-// Super implementation - Cant use __SUPER__ as string value
-    // $val = $this->input->readString();
-    // $this->stdout->writeString("stdout");
-    // $this->stderr->writeString("stderr");
-
-
+/**
+ * The main interpreter class for executing the SOL25 program
+ */
 class Interpreter extends AbstractInterpreter
 {
+    // Global reference to the interpreter instance
     static public Interpreter $instance;
 
-    // Add a method to access the input reader
+    /**
+     * Provides global access to the input reader
+     *
+     * @return InputReader|null Input reader if interpreter is initialized
+     */
     public static function getInputReader(): ?InputReader
     {
         if (isset(self::$instance)) {
@@ -30,7 +40,11 @@ class Interpreter extends AbstractInterpreter
         return null;
     }
 
-    // Add a method to access the input reader
+    /**
+     * Provides global access to the output writer
+     *
+     * @return OutputWriter|null Output writer if interpreter is initialized
+     */
     public static function getStdoutWriter(): ?OutputWriter
     {
         if (isset(self::$instance)) {
@@ -38,14 +52,19 @@ class Interpreter extends AbstractInterpreter
         }
         return null;
     }
-    
+
+    /**
+     * Main entry point for interpreting the SOL25 program
+     *
+     * @return int Return code 0 on success
+     */
     public function execute(): int
     {
         self::$instance = $this;
 
         $dom = $this->source->getDOMDocument();
 
-        // Parse program structure
+        // Parse program structure for Class definitions
         $parser = new Parser();
         $parser->parse($dom);
 
@@ -58,6 +77,9 @@ class Interpreter extends AbstractInterpreter
         return ReturnCode::OK;
     }
 
+    /**
+     * Executes the 'run' method from the 'Main' class
+     */
     private function executeRunMethod(): void
     {
         try {
@@ -65,19 +87,20 @@ class Interpreter extends AbstractInterpreter
             $method = ClassDefinition::getMethod("Main", "run");
         }
         catch (UsingUndefinedException) {
+            // 'Main' is not defined
             throw new UnexpectedXMLFormatException("Main class not found.");
         }
 
-        // Main class instance
+        // Create instance of Main class and new scope
         $main_class = new ClassInstance("Main");
         $block = new BlockScope();
 
-        // In this scope, self references to Main class
+        // In this scope, 'self' references to Main class
         $block->setVariable("self", $main_class);
 
         // Check if 'run' method is defined
         if ($method instanceof \DOMElement) {
-            // Skip the method node and send block node as argument
+            // Skip the 'method node' and send 'block node' as argument
             $block_node = $method->getElementsByTagName("block")->item(0);
             $block->processBlock($block_node, []);
         }
@@ -87,7 +110,9 @@ class Interpreter extends AbstractInterpreter
         }
     }
 
-    // Defines built-in classes with their built-in methods
+    /**
+     * Defines built-in classes with their built-in methods
+     */
     private function defineBuiltinClasses(): void
     {
         $built_in_builder = new BuiltinMethodBuilder();

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * VUT FIT - IPP
+ * @author Jakub Lůčný (xlucnyj00)
+ * @date 2025-04-14
+ * @project IPP project 2 - interpreter for SOL25 language
+ * @brief BlockScope class definition
+ */
+
 namespace IPP\Student;
 
 use IPP\Student\Exception\InterpretException;
@@ -7,45 +15,78 @@ use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
 use IPP\Student\Exception\UsingUndefinedException;
 
+/**
+ * BlockScope class for processing assignments inside block
+ */
 class BlockScope
 {
     /**
-     * @var array<string, ClassInstance> List of variables of current block
+     * @var array<string, ClassInstance> List of variables of current block scope, associated by name
      */
     protected array $variables = [];
-    protected ClassInstance $return_value;    // return value of the method
 
-    // Constructor
+    // Return value of the block/method (last executed assignment)
+    protected ClassInstance $return_value;    
+
+    /**
+     * Constructor with default return value for empty block
+     */
     public function __construct()
     {
         $this->return_value = new ClassInstance("Nil");
     }
 
+    /**
+     * Sets return value for this block
+     *
+     * @param ClassInstance $value The value to be returned
+     */
     public function setReturnValue(ClassInstance $value): void
     {
         $this->return_value = $value;
     }
 
+    /**
+     * Returns current return value of the block
+     *
+     * @return ClassInstance
+     */
     public function getReturnValue(): ClassInstance
     {
         return $this->return_value;
     }
 
+    /**
+     * Sets variable with value in the current scope
+     *
+     * @param string $name Variable name
+     * @param ClassInstance $value Value of variable
+     */
     public function setVariable(string $name, ClassInstance $value): void
     {
         $this->variables[$name] = $value;
     }
 
+    /**
+     * Returns value of given variable from current scope
+     *
+     * @param string $name Variable name
+     * @return ClassInstance
+     */
     public function getVariable(string $name): ClassInstance
     {
         if (!isset($this->variables[$name])) {
+            // If given variable doesn't exist
             throw new UsingUndefinedException("Using undefined variable: " . $name);
         }
         return $this->variables[$name];
     }
 
-    // ********************** BLOCK PROCESSING ***********************
+    // ************************** BLOCK PROCESSING ***************************
     /**
+     * Assigns arguments to parameters of the current block scope and calls processAssignments()
+     * 
+     * @param \DOMElement $block_node Block node to be processed
      * @param array<ClassInstance> $args Arguments given to the block
      */
     public function processBlock(?\DOMElement $block_node, array $args): void
@@ -63,20 +104,23 @@ class BlockScope
             if ($child_node instanceof \DOMElement) {
                 // Check if it's a parameter
                 if ($child_node->tagName === "parameter") {
-                    // Assign it to the block attribute as variable with correct value
+                    // Get parameter attributes
                     $order = (int)$child_node->getAttribute("order");
                     $par_name = $child_node->getAttribute("name");
 
+                    // Check for correct number of parameters
                     if ($order > $num_of_args) {
                         throw new MessageDNUException("Block doen't understand message with this number of parameters.");
                     }
 
+                    // Assign it to the block as variable
                     $this->setVariable($par_name, $args[$order-1]);
                     $args_found++;
                 }
             }
         }
 
+        // Check for correct number of parameters
         if ($args_found !== $num_of_args) {
             throw new MessageDNUException("Block doesn't understand message with this number of parameters.");
         }
@@ -84,7 +128,12 @@ class BlockScope
         $this->processAssignments($block_node);
     }
 
-    // ************************* ASSIGN PROCESSING **************************
+    // ************************* ASSIGN PROCESSING ***************************
+    /**
+     * Processes all assignments in the block
+     * 
+     * @param \DOMElement $block_node Block to be processed
+     */
     private function processAssignments(\DOMElement $block_node): void
     {
         $order = 0;
@@ -102,7 +151,7 @@ class BlockScope
                         if ($assign_order === $order) {
                             $new_order++;
 
-                            // ************* ASSIGNMENT PROCESSING **************
+                            // ************ ASSIGNMENT PROCESSING ************
                             $result = null;
                             $var_name = null;
 
@@ -125,6 +174,7 @@ class BlockScope
                                 }
                             }
 
+                            // Safety checks
                             if (is_string($result) || $result === null || $var_name === null) {
                                 // This should never reach, only with malformed XML
                                 throw new InterpretException("Malformed XML. If you got this error msg, something is REALLY wrong, sorry.");
@@ -134,9 +184,9 @@ class BlockScope
                             $this->setVariable($var_name, $result);
                             $this->setReturnValue($result);
                         }
-                    }
+                    }   // it's an assignment
                 }
-            }
+            }   // foreach child node
         }
-    }
+    }   // processAssignments()
 }   // class BlockScope

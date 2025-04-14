@@ -1,11 +1,24 @@
 <?php
 
+/**
+ * VUT FIT - IPP
+ * @author Jakub Lůčný (xlucnyj00)
+ * @date 2025-04-14
+ * @project IPP project 2 - interpreter for SOL25 language
+ * @brief Parser class definition
+ */
+
 namespace IPP\Student;
 
-
+/**
+ * Parser class for extracting class definitions from XML
+ */
 class Parser
 {
-    // Parses given DOMDocument and creates instances of 'ClassDefinition' for each user-defined class
+    /**
+     * Main Parser entry point
+     * Parses given DOMDocument and creates instances of 'ClassDefinition' for each user-defined class
+     */
     public function parse(\DOMDocument $dom): void
     {
         if ($dom->documentElement !== null) {
@@ -13,7 +26,9 @@ class Parser
         }
     }
 
-    // Creates an instance for each user-defined class and sets all attributes
+    /**
+     * Creates an instance of ClassDefinition for each user-defined class
+     */
     private function parseClasses(\DOMElement $program_node): void
     {
         foreach ($program_node->getElementsByTagName("class") as $class_node) {
@@ -27,17 +42,13 @@ class Parser
         }
     }
 
-    // Gets all methods of the class and their parameters with correct order
+    /**
+     * Gets all methods with their definitions of the given class node
+     */
     private function parseMethods(\DOMElement $class_node, ClassDefinition $class): void
     {
         foreach ($class_node->getElementsByTagName("method") as $method_node) {
             $method_name = $method_node->getAttribute("selector");
-            $parameters = [];
-    
-            // Extract parameters if present
-            foreach ($method_node->getElementsByTagName("parameter") as $param_node) {
-                $parameters[(int)$param_node->getAttribute("order")-1] = $param_node->getAttribute("name");
-            }
     
             // Store method with its definition
             $class->addMethod($method_name, $method_node);

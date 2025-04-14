@@ -1,13 +1,26 @@
 <?php
 
+/**
+ * VUT FIT - IPP
+ * @author Jakub Lůčný (xlucnyj00)
+ * @date 2025-04-14
+ * @project IPP project 2 - interpreter for SOL25 language
+ * @brief BuiltinMethodBuilder class definition
+ */
+
 namespace IPP\Student;
 
 use IPP\Student\Exception\IncorrectArgumentException;
 use IPP\Student\Exception\MessageDNUException;
 
+/**
+ * Class building definitions for all the built-in methods
+ */
 class BuiltinMethodBuilder
 {
-    // Returns new instance of True class
+    /**
+     * Helper function, returns new instance of True class
+     */
     private function trueInstance(): ClassInstance
     {
         $true = new ClassInstance("True");
@@ -15,7 +28,9 @@ class BuiltinMethodBuilder
         return $true;
     }
 
-    // Returns new instance of False class
+    /**
+     * Helper function, returns new instance of False class
+     */
     private function falseInstance(): ClassInstance
     {
         $false = new ClassInstance("False");
@@ -23,7 +38,11 @@ class BuiltinMethodBuilder
         return $false;
     }
 
-    // Build in insatnce methods for Object class
+    /**
+     * Builds built-in instance methods for Object class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildObjectMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
@@ -38,6 +57,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // Same intern value
             if ($receiver->getValue() !== null && $object->getValue() !== null) {
                 $equal = $receiver->getValue() === $object->getValue();
                 if ($equal) {
@@ -81,10 +101,16 @@ class BuiltinMethodBuilder
         });
     }
 
+    /**
+     * Builds built-in instance methods for Nil class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildNilMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // Nil class instance is always the same instance
             if ($object->getClassName() === "Nil") {
                 return $this->trueInstance();
             }
@@ -93,6 +119,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // No intern value, compare Class name
             if ($object->getClassName() === "Nil") {
                 return $this->trueInstance();
             }
@@ -112,10 +139,16 @@ class BuiltinMethodBuilder
         });
     }
 
+    /**
+     * Builds built-in instance methods for Integer class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildIntegerMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // Compare intern values
             if ($receiver->getValue() !== null && $object->getValue() !== null) {
                 $equal = $receiver->getValue() === $object->getValue();
                 if ($equal) {
@@ -157,7 +190,7 @@ class BuiltinMethodBuilder
             $a = $receiver->getValue();
             $b = $object->getValue();
 
-            // The second check is just for PHPstan, it will never actually possibly happend
+            // The second check is just for PHPstan, it will never actually possibly happen
             if (!is_int($b) || !is_int($a)) {
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
@@ -205,6 +238,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("asString", function(ClassInstance $receiver): ClassInstance
         {
+            // Returns string representation of intern attribute value
             $string = new ClassInstance("String");
             $value = $receiver->getValue();
             if (is_numeric($value)) {
@@ -223,6 +257,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("asInteger", function(ClassInstance $receiver): ClassInstance
         {
+            // Returns itself
             return $receiver;
         });
 
@@ -230,52 +265,38 @@ class BuiltinMethodBuilder
         {
             $repeat_times = $receiver->getValue();
 
-            // Default return value if for doesn't run
+            // Default return value if for loop doesn't run
             $retrn_value = new ClassInstance("Nil");
             $retrn_value->setValue(null);
 
-            $obj_type = $object->getClassName();
+            // Sends 'value:' message, either to block or (hopefully) to something that understands it
+            $argument = new ClassInstance("Integer");
+            $argument->setValue(0);
 
-            // Not a block, but something that understand 'value:' message (hopefully)
-            if ($obj_type !== "Object") {
-                $argument = new ClassInstance("Integer");
-                $argument->setValue(0);
+            $sender = new MessageSender($block->getVariable("self"));
 
-                $sender = new MessageSender($block->getVariable("self"));
-
-                if ($repeat_times > 0) {
-                    for ($i = 1; $i <= $repeat_times; $i++) {
-                        $argument->setValue($i);
-                        $retrn_value = $sender->invokeInstanceMethod($object, "value:", [$argument]);
-                    }
-                    return $retrn_value;
-                }
-            }
-
+            // Repeats given times
             if ($repeat_times > 0) {
-                $block_node = $object->getValue();
-                if (!($block_node instanceof \DOMElement)) {
-                    throw new IncorrectArgumentException("Incorrect argument value/type");
-                }    
-
-                $argument = new ClassInstance("Integer");
-                $argument->setValue(0);
-
                 for ($i = 1; $i <= $repeat_times; $i++) {
                     $argument->setValue($i);
-                    $block->processBlock($block_node, [$argument]);
-
-                    $retrn_value = $block->getReturnValue();
+                    $retrn_value = $sender->invokeInstanceMethod($object, "value:", [$argument]);
                 }
             }
+
             return $retrn_value;
         });
     }
 
+    /**
+     * Builds built-in instance methods for String class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildStringMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // Compares intern value attribute
             if ($receiver->getValue() !== null && $object->getValue() !== null) {
                 $equal = $receiver->getValue() === $object->getValue();
                 if ($equal) {
@@ -312,6 +333,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("asInteger", function(ClassInstance $receiver): ClassInstance
         {
+            // If given string is easily convertible to integer, return its integer value
             if (!is_numeric($receiver->getValue())) {
                 $nil = new ClassInstance("Nil");
                 $nil->setValue(null);
@@ -346,6 +368,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("startsWith:endsBefore:", function(ClassInstance $receiver, ClassInstance $from, ClassInstance $to): ClassInstance
         {
+            // Returns substring
             if ($receiver->getValue() !== null && $from->getValue() !== null && $to->getValue() !== null) {
                 $original_string = $receiver->getValue();
 
@@ -357,6 +380,7 @@ class BuiltinMethodBuilder
                 $start = $from->getValue();
                 $end = $to->getValue();
 
+                // Check correct argument values
                 if (!is_int($start) || !is_int($end) || $start < 1 || $end < 1 || $end > strlen($original_string)+1) {
                     $nil = new ClassInstance("Nil");
                     $nil->setValue(null);
@@ -370,6 +394,7 @@ class BuiltinMethodBuilder
                     return $string;
                 }
 
+                // Create the substring
                 $substring = substr($original_string, (int)$start-1, (int)$end-$start);
                 $string->setValue($substring);
                 return $string;
@@ -381,6 +406,11 @@ class BuiltinMethodBuilder
         });
     }
 
+    /**
+     * Builds built-in instance methods for Block class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildBlockMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("isBlock", function(ClassInstance $receiver): ClassInstance
@@ -438,62 +468,39 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("whileTrue:", function(BlockScope $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            // Default return value if for doesn't run
+            // Default return value if while doesn't run
             $ret_val = new ClassInstance("Nil");
             $ret_val->setValue(null);
 
-            // Get the block node from the XML that represents the condition
-            $condition_node = $receiver->getValue();
-            if (!($condition_node instanceof \DOMElement)) {
-                // this should never happen, but just in case
-                throw new MessageDNUException("Cant call whileTrue: on non-block object");
-            }
-
-            $obj_type = $object->getClassName();
-            // Sends 'value:' message instead
-            if ($obj_type !== "Object") {
-                $sender = new MessageSender($block->getVariable("self"));
-                while(true) {
-                    // Check if condition is true
-                    $block->processBlock($condition_node, []);
-                    $result = $block->getReturnValue();
-    
-                    if ($result->getClassName() !== "True") {
-                        break;
-                    }
-
-                    // Send value message if condition was true
-                    $ret_val = $sender->invokeInstanceMethod($object, "value", []);
-                }
-                return $ret_val;
-            }
-
-            $execute_node = $object->getValue();
-            if (!($execute_node instanceof \DOMElement)) {
-                throw new IncorrectArgumentException("Incorrect argument value/type");
-            }
+            // Creates new sender with 'self' variable set
+            $sender = new MessageSender($block->getVariable("self"));
 
             while(true) {
                 // Check if condition is true
-                $block->processBlock($condition_node, []);
-                $result = $block->getReturnValue();
+                $result = $sender->invokeInstanceMethod($receiver, "value", []);
 
                 if ($result->getClassName() !== "True") {
                     break;
                 }
-                // Execute the block if condition was true
-                $block->processBlock($execute_node, []);
-                $ret_val = $block->getReturnValue();
+
+                // Send value message if condition was true
+                $ret_val = $sender->invokeInstanceMethod($object, "value", []);
             }
 
             return $ret_val;
         });
     }
 
+    /**
+     * Builds built-in instance methods for True class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildTrueMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // True class instance is always the same instance
             if ($object->getClassName() === "True") {
                 return $this->trueInstance();
             }
@@ -502,6 +509,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // True class instance is always the same instance
             if ($object->getClassName() === "True") {
                 return $this->trueInstance();
             }
@@ -527,15 +535,10 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("ifTrue:ifFalse:", function(BlockScope $block, ClassInstance $receiver, ClassInstance $true_object, ClassInstance $false_object): ClassInstance
         {
-            // Get the block node from the XML that is to be processed
-            $block_node = $true_object->getValue();
-            if (!($block_node instanceof \DOMElement)) {
-                throw new IncorrectArgumentException("Incorrect argument value/type");
-            }
+            $sender = new MessageSender($block->getVariable("self"));
 
-            // Process the block
-            $block->processBlock($block_node, []);
-            $ret_val = $block->getReturnValue();
+            // Send 'value' message to the first argument
+            $ret_val = $sender->invokeInstanceMethod($true_object, "value", []);
             return $ret_val;
         });
 
@@ -547,10 +550,16 @@ class BuiltinMethodBuilder
         });
     }
 
+    /**
+     * Builds built-in instance methods for False class
+     * 
+     * @param ClassDefinition $class Class definition instance of the class to build methods for
+     */
     public function buildFalseMethods(ClassDefinition $class): void
     {
         $class->addBuiltinMethod("identicalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // False class instance is always the same instance
             if ($object->getClassName() === "False") {
                 return $this->trueInstance();
             }
@@ -559,6 +568,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("equalTo:", function(ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
+            // False class instance is always the same instance
             if ($object->getClassName() === "False") {
                 return $this->trueInstance();
             }
@@ -584,15 +594,10 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("ifTrue:ifFalse:", function(BlockScope $block, ClassInstance $receiver, ClassInstance $true_object, ClassInstance $false_object): ClassInstance
         {
-            // Get the block node from the XML that is to be processed
-            $block_node = $false_object->getValue();
-            if (!($block_node instanceof \DOMElement)) {
-                throw new IncorrectArgumentException("Incorrect argument value/type");
-            }
+            $sender = new MessageSender($block->getVariable("self"));
 
-            // Process the block
-            $block->processBlock($block_node, []);
-            $ret_val = $block->getReturnValue();
+            // Send 'value' message to the second argument
+            $ret_val = $sender->invokeInstanceMethod($false_object, "value", []);
             return $ret_val;
         });
 
