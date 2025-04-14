@@ -241,10 +241,12 @@ class BuiltinMethodBuilder
                 $argument = new ClassInstance("Integer");
                 $argument->setValue(0);
 
+                $sender = new MessageSender($block->getVariable("self"));
+
                 if ($repeat_times > 0) {
                     for ($i = 1; $i <= $repeat_times; $i++) {
                         $argument->setValue($i);
-                        $retrn_value = $block->invokeInstanceMethod($object, "value:", [$argument]);
+                        $retrn_value = $sender->invokeInstanceMethod($object, "value:", [$argument]);
                     }
                     return $retrn_value;
                 }
@@ -450,6 +452,7 @@ class BuiltinMethodBuilder
             $obj_type = $object->getClassName();
             // Sends 'value:' message instead
             if ($obj_type !== "Object") {
+                $sender = new MessageSender($block->getVariable("self"));
                 while(true) {
                     // Check if condition is true
                     $block->processBlock($condition_node, []);
@@ -460,7 +463,7 @@ class BuiltinMethodBuilder
                     }
 
                     // Send value message if condition was true
-                    $ret_val = $block->invokeInstanceMethod($object, "value", []);
+                    $ret_val = $sender->invokeInstanceMethod($object, "value", []);
                 }
                 return $ret_val;
             }
@@ -512,7 +515,8 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("and:", function(BlockScope $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            $ret_val= $block->invokeInstanceMethod($object, "value", []);
+            $sender = new MessageSender($block->getVariable("self"));
+            $ret_val= $sender->invokeInstanceMethod($object, "value", []);
             return $ret_val;
         });
 
@@ -573,7 +577,8 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("or:", function(BlockScope $block, ClassInstance $receiver, ClassInstance $object): ClassInstance
         {
-            $ret_val = $block->invokeInstanceMethod($object, "value", []);
+            $sender = new MessageSender($block->getVariable("self"));
+            $ret_val = $sender->invokeInstanceMethod($object, "value", []);
             return $ret_val;
         });
 

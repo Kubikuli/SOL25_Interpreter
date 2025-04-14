@@ -1,0 +1,168 @@
+<?php
+
+namespace IPP\Student;
+
+use IPP\Student\Exception\UnexpectedXMLFormatException;
+use IPP\Student\Exception\UsingUndefinedException;
+use IPP\Student\Exception\IncorrectArgumentException;
+use IPP\Student\Exception\MessageDNUException;
+
+class MessageSender
+{
+    private ClassInstance $self_reference;
+
+    // Constructor
+    public function __construct(ClassInstance $self)
+    {
+        $this->self_reference = $self;
+    }
+
+    private function getSelf(): ClassInstance
+    {
+        return $this->self_reference;
+    }
+
+    // ************************* INVOKING CLASS INSTANCE CONSTRUCTOR *************************
+    /**
+     * @param array<ClassInstance> $args Arguments given to the block
+     */
+    public function invokeClassMethod(string $receiver, string $selector, array $args): ClassInstance
+    {
+        switch ($selector) {
+            case "new":
+                // Just creates a new pure class instance
+                $new_class = new ClassInstance($receiver);
+
+                // Set default value
+                if (ClassDefinition::isInstanceOf($receiver, "Integer")) {
+                    $new_class->setValue(0);
+                }
+                else if (ClassDefinition::isInstanceOf($receiver, "String")) {
+                    $new_class->setValue("");
+                }
+                else if (ClassDefinition::isInstanceOf($receiver, "True")) {
+                    $new_class->setValue(true);
+                }
+                else if (ClassDefinition::isInstanceOf($receiver, "False")) {
+                    $new_class->setValue(false);
+                }
+                // Rest of the classes dont use internal value so we leave it 'null'
+                return $new_class;
+
+            case "from:":
+                $new_class = new ClassInstance($receiver);
+                if (isset($args[0])) {
+                    $arg = $args[0];
+                    // If they are the same class type or one is instance of the other
+                    if ($arg->isInstanceOf($receiver) || $new_class->isInstanceOf($arg->getClassName())) {
+                        $arg->copyValues($new_class);
+                    }
+                    else {
+                        throw new IncorrectArgumentException("Invalid class type for 'from:' " . $receiver);
+                    }
+                }
+                else {
+                    // This should never happen if parser works correctly
+                    throw new UnexpectedXMLFormatException("Missing argument for 'from:' ");
+                }
+                return $new_class;
+
+            case "read":
+                // Check if given class is instance of built-in String class 
+                if (ClassDefinition::isInstanceOf($receiver, "String") === false) {
+                    throw new UsingUndefinedException("This class doesn't understand 'read' message: " . $receiver);
+                }
+
+                // Create a new instance and initialize it with value from input
+                $string = new ClassInstance($receiver);
+                // Use the input reader
+                $inputReader = Interpreter::getInputReader();
+                $value = $inputReader ? $inputReader->readString() : "";
+                $string->setValue($value);
+                return $string;
+            default:
+                throw new UsingUndefinedException("Do not understand this class method: " . $selector);
+        }
+    }
+
+    // ************************** INVOKING CLASS INSTANCE METHODS **************************
+    /**
+     * @param array<ClassInstance> $args Arguments to be send with message
+     */
+    public function invokeInstanceMethod(ClassInstance $receiver, string $selector, array $args): ClassInstance
+    {
+        // Get the method from the class definition
+        $method = ClassDefinition::getMethod($receiver->getClassName(), $selector);
+
+        // ^^^ finds correct method but the receiver should be self instance (if __SUPER__ is used)
+        if ($receiver->getValue() === "__SUPER__"){
+            $receiver = $this->getSelf();
+        }
+
+        // Didn't find coresponding method in the class
+        if ($method === null) {
+            $num_of_args = count($args);
+
+            // 0 arguments unknown message means getting value of attribute or error if no such attribute exists
+            if ($num_of_args === 0){
+                $result = $receiver->getAttribute($selector);
+                if ($result === null) {
+                    throw new MessageDNUException("Unknown attribute/method: " . $selector);
+                }
+                return $result;
+            }
+            // Creating/updating value of an attribute
+            else if ($num_of_args === 1){
+
+                $attrib_name = substr($selector, 0, -1);    // get rid of the trailing ':'
+                $receiver->setAttribute($attrib_name, $args[0]);
+
+                return $receiver;
+            }
+            
+            throw new MessageDNUException("Unknown attribute: " . $selector);
+        }
+
+        // Method found
+        // User defined method
+        else if ($method instanceof \DOMElement) {
+            $new_scope = new BlockScope();
+            $new_scope->setVariable("self", $receiver);
+
+            // Process the block with the arguments
+            $block_node = $method->getElementsByTagName("block")->item(0);
+
+            $new_scope->processBlock($block_node, $args);
+
+            return $new_scope->getReturnValue();
+        }
+        // Built-in method
+        // == is_callable() 
+        else {
+            $result = null;
+            switch($selector) {
+                case "value":
+                case "value:":
+                case "value:value:":
+                case "value:value:value:":
+                case "timesRepeat:":
+                case "whileTrue:":
+                case "ifTrue:ifFalse:":
+                case "and:":
+                case "or:":
+                    // Those methods need new scope -> block instance with self variable set
+                    $new_scope = new BlockScope();
+                    $real_self = $this->getSelf();
+                    $new_scope->setVariable("self", $real_self);
+
+                    $result = $method($new_scope, $receiver, ...$args);
+                    break;
+
+                default:
+                    $result = $method($receiver, ...$args);
+                    break;
+            }
+            return $result;
+        }
+    }
+}
