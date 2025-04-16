@@ -16,15 +16,15 @@ namespace IPP\Student;
 class ClassInstance
 {
     // Class type of the instance
-    protected string $class_name;
+    private string $class_name;
 
     // Intern value attribute used only by some built-in classes
-    protected int|float|string|\DOMElement|bool|null $value;
+    private int|float|string|\DOMElement|bool|null $value;
 
     /**
      * @var array<string, ClassInstance> List of attributes of the instance
      */
-    protected array $attributes;
+    private array $attributes;
 
     /**
      * Constructor initializes attributes to default values

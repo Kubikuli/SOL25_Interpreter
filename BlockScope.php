@@ -23,10 +23,10 @@ class BlockScope
     /**
      * @var array<string, ClassInstance> List of variables of current block scope, associated by name
      */
-    protected array $variables = [];
+    private array $variables = [];
 
     // Return value of the block/method (last executed assignment)
-    protected ClassInstance $return_value;    
+    private ClassInstance $return_value;    
 
     /**
      * Constructor with default return value for empty block

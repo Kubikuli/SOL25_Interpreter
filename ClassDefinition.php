@@ -23,12 +23,12 @@ class ClassDefinition
     static public array $instances = [];
 
     // parent class name
-    protected string $parent;
+    private string $parent;
 
     /**
      * @var array<string, \DOMElement|callable> List of instance methods specific for the given class, associated by name
      */
-    protected array $methods = [];
+    private array $methods = [];
 
     /**
      * Constructor appends the newly created instance to the list of instances
