@@ -148,10 +148,43 @@ class MessageSender
         } else {
         // Built-in method (== is_callable())
             $result = null;
+            $checked = false;
             // Those methods need new scope -> block instance with self variable set
             switch ($selector) {
                 case "value":
+                    // This will always be block, so we can check its arity
+                    $block_body = $receiver->getValue();
+                    if (!$block_body instanceof \DOMElement) {
+                        throw new UnexpectedXMLFormatException("Malformed XML.");
+                    }
+
+                    if ($this->getBlockArity($block_body) !== 0) {
+                        // This block doesn't acutally understand this message, so process it as attribute
+                        $result = $receiver->getAttribute($selector);
+                        if ($result === null) {
+                            throw new MessageDNUException("Unknown attribute/method: " . $selector);
+                        }
+                        break;
+                    }
+                    $checked = true;
+                    // Fall through
                 case "value:":
+                    if (!$checked) {
+                        $block_body = $receiver->getValue();
+                        if (!$block_body instanceof \DOMElement) {
+                            throw new UnexpectedXMLFormatException("Malformed XML.");
+                        }
+                        // Check if this block understands this message
+                        if ($this->getBlockArity($block_body) !== 1) {
+                            // Create/update value of an attribute
+                            $attrib_name = substr($selector, 0, -1);    // get rid of the trailing ':'
+                            $receiver->setAttribute($attrib_name, $args[0]);
+
+                            $result = $receiver;
+                            break;
+                        }
+                    }
+                    // Fall through
                 case "value:value:":
                 case "value:value:value:":
                 case "timesRepeat:":
@@ -181,5 +214,24 @@ class MessageSender
     private function getSelf(): ClassInstance
     {
         return $this->self_reference;
+    }
+
+    /**
+     * Counts and returns arity of given block
+     *
+     * @param \DOMElement $expr_node Block node to be processed
+     * @return int Number of parameters in the block (== his arity)
+     */
+    private function getBlockArity(\DOMElement $expr_node): int
+    {
+        $arity = 0;
+        foreach ($expr_node->childNodes as $child_node) {
+            if ($child_node instanceof \DOMElement) {
+                if ($child_node->tagName === "parameter") {
+                    $arity++;
+                }
+            }
+        }
+        return $arity;
     }
 }
