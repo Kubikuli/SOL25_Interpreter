@@ -49,7 +49,7 @@ class Parser
     {
         foreach ($class_node->getElementsByTagName("method") as $method_node) {
             $method_name = $method_node->getAttribute("selector");
-    
+
             // Store method with its definition
             $class->addMethod($method_name, $method_node);
         }

@@ -35,7 +35,7 @@ class MessageSender
     // ****************** INVOKING CLASS INSTANCE CONSTRUCTOR *******************
     /**
      * Creates new class instance based on received arguments
-     * 
+     *
      * @param string $receiver Class name of the instance to be created
      * @param string $selector Name of the class method to be called
      * @param array<ClassInstance> $args Argument used to create the instance from (if needed)
@@ -51,17 +51,14 @@ class MessageSender
                 // Set default value
                 if (ClassDefinition::isInstanceOf($receiver, "Integer")) {
                     $new_class->setValue(0);
-                }
-                else if (ClassDefinition::isInstanceOf($receiver, "String")) {
+                } elseif (ClassDefinition::isInstanceOf($receiver, "String")) {
                     $new_class->setValue("");
-                }
-                else if (ClassDefinition::isInstanceOf($receiver, "True")) {
+                } elseif (ClassDefinition::isInstanceOf($receiver, "True")) {
                     $new_class->setValue(true);
-                }
-                else if (ClassDefinition::isInstanceOf($receiver, "False")) {
+                } elseif (ClassDefinition::isInstanceOf($receiver, "False")) {
                     $new_class->setValue(false);
                 }
-                // Rest of the classes dont use internal value so we leave it 'null'
+                // Rest of the classes don't use internal value so we leave it 'null'
                 return $new_class;
 
             case "from:":
@@ -72,19 +69,17 @@ class MessageSender
                     // If they are the same class type or one is instance of the other
                     if ($arg->isInstanceOf($receiver) || $new_class->isInstanceOf($arg->getClassName())) {
                         $arg->copyValues($new_class);
-                    }
-                    else {
+                    } else {
                         throw new IncorrectArgumentException("Invalid class type for 'from:' " . $receiver);
                     }
-                }
-                else {
+                } else {
                     // This should never happen if parser works correctly
                     throw new UnexpectedXMLFormatException("Missing argument for 'from:' ");
                 }
                 return $new_class;
 
             case "read":
-                // Check if given class is instance of built-in String class, other classes don't understand 'read' message
+                // Check if given class is instance of built-in String class, others don't understand 'read' message
                 if (ClassDefinition::isInstanceOf($receiver, "String") === false) {
                     throw new UsingUndefinedException("This class doesn't understand 'read' message: " . $receiver);
                 }
@@ -104,7 +99,7 @@ class MessageSender
     // ******************** INVOKING CLASS INSTANCE METHODS ********************
     /**
      * Calls given instance method with given arguments
-     * 
+     *
      * @param ClassInstance $receiver Instance to be called
      * @param string $selector Name of the method to be called
      * @param array<ClassInstance> $args Arguments to be send with message
@@ -115,34 +110,31 @@ class MessageSender
         $method = ClassDefinition::getMethod($receiver->getClassName(), $selector);
 
         // ^^^ finds correct method but the receiver should be self instance (if __SUPER__ is used)
-        if ($receiver->getValue() === "__SUPER__"){
+        if ($receiver->getValue() === "__SUPER__") {
             $receiver = $this->getSelf();
         }
 
         if ($method === null) {
-        // Didn't find coresponding method in the class
+        // Didn't find corresponding method in the class
             $num_of_args = count($args);
 
             // 0 arguments == unknown message means getting value of attribute or error if no such attribute exists
-            if ($num_of_args === 0){
+            if ($num_of_args === 0) {
                 $result = $receiver->getAttribute($selector);
                 if ($result === null) {
                     throw new MessageDNUException("Unknown attribute/method: " . $selector);
                 }
                 return $result;
-            }
-            // Creating/updating value of an attribute
-            else if ($num_of_args === 1){
-
+            } elseif ($num_of_args === 1) {
+                // Creating/updating value of an attribute
                 $attrib_name = substr($selector, 0, -1);    // get rid of the trailing ':'
                 $receiver->setAttribute($attrib_name, $args[0]);
 
                 return $receiver;
             }
-            
+
             throw new MessageDNUException("Unknown attribute: " . $selector);
-        }
-        else if ($method instanceof \DOMElement) {
+        } elseif ($method instanceof \DOMElement) {
         // Method found (user-defined method)
             // Create new scope based on the receiver
             $new_scope = new BlockScope();
@@ -153,12 +145,11 @@ class MessageSender
             $new_scope->processBlock($block_node, $args);
 
             return $new_scope->getReturnValue();
-        }
-        else {
+        } else {
         // Built-in method (== is_callable())
             $result = null;
             // Those methods need new scope -> block instance with self variable set
-            switch($selector) {
+            switch ($selector) {
                 case "value":
                 case "value:":
                 case "value:value:":

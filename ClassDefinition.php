@@ -20,13 +20,13 @@ class ClassDefinition
     /**
      * @var array<string, self> List of all it's instances (== all class definitions, associated by name)
      */
-    static public array $instances = [];
+    public static array $instances = [];
 
     // parent class name
     private string $parent;
 
     /**
-     * @var array<string, \DOMElement|callable> List of instance methods specific for the given class, associated by name
+     * @var array<string, \DOMElement|callable> Instance methods specific for the given class, associated by name
      */
     private array $methods = [];
 
@@ -51,7 +51,7 @@ class ClassDefinition
 
     /**
      * Adds a new method definition to the class
-     * 
+     *
      * @param string $name Name of the method
      * @param \DOMElement $method Starting XML node of the method
      */
@@ -62,7 +62,7 @@ class ClassDefinition
 
     /**
      * Adds a new method definition to the class (same as addMethod, but for built-in classes)
-     * 
+     *
      * @param string $name Name of the method
      * @param callable $implementation Implementation of the method
      */
@@ -74,11 +74,11 @@ class ClassDefinition
 
     /**
      * Searches for the given class in the list of instances
-     * 
+     *
      * @param string $class_name Name of the class to be searched
      * @return ClassDefinition Instance of the class definition
      */
-    static public function getClass(string $class_name): ClassDefinition
+    public static function getClass(string $class_name): ClassDefinition
     {
         // Search for the class in the list of instances
         if (!isset(self::$instances[$class_name])) {
@@ -90,12 +90,12 @@ class ClassDefinition
 
     /**
      * Searches for the given method in the given class and its parent classes
-     * 
+     *
      * @param string $class_name Name of the class to be searched
      * @param string $method_name Name of the method to be searched
      * @return \DOMElement|callable|null Definition of given method or null if method isn't defined for given class
      */
-    static public function getMethod(string $class_name, string $method_name): \DOMElement|callable|null
+    public static function getMethod(string $class_name, string $method_name): \DOMElement|callable|null
     {
         // Check if the class exists
         $instance = self::getClass($class_name);
@@ -116,7 +116,7 @@ class ClassDefinition
 
     /**
      * Checks if the given class is an instance of the given parent class
-     * 
+     *
      * @param string $class_name Name of the class to be checked
      * @param string $possible_parent Name of the parent class to be checked
      * @return bool True if the class is an instance of the parent class, false otherwise

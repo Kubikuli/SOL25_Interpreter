@@ -21,7 +21,7 @@ use Throwable;
  */
 class UsingUndefinedException extends IPPException
 {
-    public function __construct(string $message = "Using undefined variable/class/parameter/...", ?Throwable $previous = null)
+    public function __construct(string $message = "Using undefined var/class/param/...", ?Throwable $previous = null)
     {
         parent::__construct($message, ReturnCode::PARSE_UNDEF_ERROR, $previous);
     }

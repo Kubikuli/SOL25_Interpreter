@@ -26,7 +26,7 @@ class BlockScope
     private array $variables = [];
 
     // Return value of the block/method (last executed assignment)
-    private ClassInstance $return_value;    
+    private ClassInstance $return_value;
 
     /**
      * Constructor with default return value for empty block
@@ -85,7 +85,7 @@ class BlockScope
     // ************************** BLOCK PROCESSING ***************************
     /**
      * Assigns arguments to parameters of the current block scope and calls processAssignments()
-     * 
+     *
      * @param \DOMElement $block_node Block node to be processed
      * @param array<ClassInstance> $args Arguments given to the block
      */
@@ -110,11 +110,11 @@ class BlockScope
 
                     // Check for correct number of parameters
                     if ($order > $num_of_args) {
-                        throw new MessageDNUException("Block doen't understand message with this number of parameters.");
+                        throw new MessageDNUException("Incorrect amount of parameters.");
                     }
 
                     // Assign it to the block as variable
-                    $this->setVariable($par_name, $args[$order-1]);
+                    $this->setVariable($par_name, $args[$order - 1]);
                     $args_found++;
                 }
             }
@@ -122,7 +122,7 @@ class BlockScope
 
         // Check for correct number of parameters
         if ($args_found !== $num_of_args) {
-            throw new MessageDNUException("Block doesn't understand message with this number of parameters.");
+            throw new MessageDNUException("Incorrect amount of parameters.");
         }
 
         $this->processAssignments($block_node);
@@ -131,7 +131,7 @@ class BlockScope
     // ************************* ASSIGN PROCESSING ***************************
     /**
      * Processes all assignments in the block
-     * 
+     *
      * @param \DOMElement $block_node Block to be processed
      */
     private function processAssignments(\DOMElement $block_node): void
@@ -139,7 +139,7 @@ class BlockScope
         $order = 0;
         $new_order = 1;
         // Makes sure the assignments are processed in the correct order
-        while($order !== $new_order) {
+        while ($order !== $new_order) {
             $order = $new_order;
             // For each child node
             foreach ($block_node->childNodes as $child_node) {
@@ -157,17 +157,15 @@ class BlockScope
 
                             foreach ($child_node->childNodes as $grand_child_node) {
                                 if ($grand_child_node instanceof \DOMElement) {
-                                    
                                     // Get variable name
                                     if ($grand_child_node->tagName === "var") {
                                         $var_name = $grand_child_node->getAttribute("name");
 
                                         if ($var_name === "") {
-                                            throw new UnexpectedXMLFormatException("Malformed XML. Missing name attribute.");
+                                            throw new UnexpectedXMLFormatException("Malformed XML. Missing name");
                                         }
-                                    }
-                                    // Get value to be assigned
-                                    else if($grand_child_node->tagName === "expr") {
+                                    } elseif ($grand_child_node->tagName === "expr") {
+                                        // Get value to be assigned
                                         $evaluator = new ExpressionEvaluator($this);
                                         $result = $evaluator->evaluateExpr($grand_child_node);
                                     }
@@ -177,16 +175,16 @@ class BlockScope
                             // Safety checks
                             if (is_string($result) || $result === null || $var_name === null) {
                                 // This should never reach, only with malformed XML
-                                throw new InterpretException("Malformed XML. If you got this error msg, something is REALLY wrong, sorry.");
+                                throw new InterpretException("Malformed XML.");
                             }
 
                             // Assign value to the variable
                             $this->setVariable($var_name, $result);
                             $this->setReturnValue($result);
                         }
-                    }   // it's an assignment
+                    }
                 }
-            }   // foreach child node
+            }
         }
-    }   // processAssignments()
-}   // class BlockScope
+    }
+}

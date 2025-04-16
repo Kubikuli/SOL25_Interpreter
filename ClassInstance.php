@@ -37,7 +37,7 @@ class ClassInstance
 
     /**
      * Sets attribute value of the instance
-     * 
+     *
      * @param string $name Name of the attribute
      * @param ClassInstance $value Value of the attribute
      */
@@ -48,7 +48,7 @@ class ClassInstance
 
     /**
      * Gets attribute value of the instance
-     * 
+     *
      * @param string $name Name of the attribute
      * @return ClassInstance|null Value of the attribute or null if not set
      */
@@ -59,7 +59,7 @@ class ClassInstance
 
     /**
      * Sets the internal value of the instance
-     * 
+     *
      * @param int|float|string|\DOMElement|bool|null $value Value to be set
      */
     public function setValue(int|float|string|\DOMElement|bool|null $value): void
@@ -69,7 +69,7 @@ class ClassInstance
 
     /**
      * Gets the internal value of the instance
-     * 
+     *
      * @return int|float|string|\DOMElement|bool|null Value of the instance or null if not set
      */
     public function getValue(): int|float|string|\DOMElement|bool|null
@@ -79,7 +79,7 @@ class ClassInstance
 
     /**
      * Gets the class name of the instance
-     * 
+     *
      * @return string Class name of the instance
      */
     public function getClassName(): string
@@ -89,7 +89,7 @@ class ClassInstance
 
     /**
      * Copies values from this instance to other instance given as an argument
-     * 
+     *
      * @param ClassInstance $instance Instance to which values will be copied
      */
     public function copyValues(ClassInstance $instance): void
@@ -104,7 +104,7 @@ class ClassInstance
 
     /**
      * Checks if the given class is an instance of class given as argument
-     * 
+     *
      * @param string $possible_parent Name of the class to be checked as possible parent
      * @return bool True if the class is an instance of the given parent class, false otherwise
      */
@@ -118,7 +118,7 @@ class ClassInstance
         // Get class definition instance of current class
         $class = ClassDefinition::getClass($this->class_name);
 
-        while(true){
+        while (true) {
             // Get parent name of current class
             $parent_name = $class->getParentName();
 

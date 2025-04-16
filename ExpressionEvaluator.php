@@ -31,8 +31,8 @@ class ExpressionEvaluator
 
     // *************************** EXPR PROCESSING ****************************
     /**
-     * Evaluates expression starting with the given expression node and returns the result value 
-     * 
+     * Evaluates expression starting with the given expression node and returns the result value
+     *
      * @param \DOMElement $expr_node Expr node to be processed
      * @return ClassInstance|string Result of the expression (string only in case of class instance creation)
      */
@@ -70,7 +70,7 @@ class ExpressionEvaluator
     // ************************* LITERAL PROCESSING **************************
     /**
      * Evaluates literal value starting with the given node and returns the result value
-     * 
+     *
      * @param \DOMElement $literal_node Literal node to be processed
      * @return ClassInstance|string Value of the literal (string only in case of class literal)
      */
@@ -132,8 +132,7 @@ class ExpressionEvaluator
             // Returns instance of the parent of current class
             $value = new ClassInstance($parent_class);
             $value->setValue("__SUPER__");
-        }
-        else {
+        } else {
             $value = $this->getVariable($var_name);
         }
 
@@ -180,9 +179,8 @@ class ExpressionEvaluator
         if (is_string($receiver)) {
             $result = $sender->invokeClassMethod($receiver, $selector, $args);
             return $result;
-        }
-        // "Normal" (instance) method call
-        else {
+        } else {
+            // "Normal" (instance) method call
             $result = $sender->invokeInstanceMethod($receiver, $selector, $args);
             return $result;
         }
@@ -191,7 +189,7 @@ class ExpressionEvaluator
     // **************************** ARG PROCESSING *****************************
     /**
      * Processes given send node and returns array of all arguments to be send with the message
-     * 
+     *
      * @param \DOMElement $send_node Send node to be processed
      * @return array<ClassInstance> List of all arguments found
      */
@@ -217,13 +215,13 @@ class ExpressionEvaluator
                     }
 
                     // Save them in the correct order
-                    $args[$order-1] = $arg;
+                    $args[$order - 1] = $arg;
                 }
             }
         }
         return $args;
     }
-    
+
     /**
      * Returns value of given variable from this scope
      *

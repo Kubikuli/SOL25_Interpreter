@@ -14,7 +14,6 @@ use IPP\Core\AbstractInterpreter;
 use IPP\Core\Interface\InputReader;
 use IPP\Core\Interface\OutputWriter;
 use IPP\Core\ReturnCode;
-
 use IPP\Student\Exception\MessageDNUException;
 use IPP\Student\Exception\UnexpectedXMLFormatException;
 use IPP\Student\Exception\UsingUndefinedException;
@@ -25,7 +24,7 @@ use IPP\Student\Exception\UsingUndefinedException;
 class Interpreter extends AbstractInterpreter
 {
     // Global reference to the interpreter instance
-    static public Interpreter $instance;
+    public static Interpreter $instance;
 
     /**
      * Provides global access to the input reader
@@ -85,8 +84,7 @@ class Interpreter extends AbstractInterpreter
         try {
             // Check if 'Main' and 'run' are defined
             $method = ClassDefinition::getMethod("Main", "run");
-        }
-        catch (UsingUndefinedException) {
+        } catch (UsingUndefinedException) {
             // 'Main' is not defined
             throw new UnexpectedXMLFormatException("Main class not found.");
         }
@@ -103,8 +101,7 @@ class Interpreter extends AbstractInterpreter
             // Skip the 'method node' and send 'block node' as argument
             $block_node = $method->getElementsByTagName("block")->item(0);
             $block->processBlock($block_node, []);
-        }
-        else {
+        } else {
             // 'run' method is not defined
             throw new MessageDNUException("Run method not found.");
         }
