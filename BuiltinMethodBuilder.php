@@ -306,7 +306,8 @@ class BuiltinMethodBuilder
             $msg = $receiver->getValue();
 
             if ($stdout && is_string($msg)) {
-                $stdout->writeString($msg);
+                $escaped_msg = stripcslashes($msg);
+                $stdout->writeString($escaped_msg);
             } else {
                 // this should never happen, but just in case
                 throw new MessageDNUException("Cant call print on non-string object");
