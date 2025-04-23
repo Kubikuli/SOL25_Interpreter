@@ -23,7 +23,7 @@ class BuiltinMethodBuilder
      */
     private function trueInstance(): ClassInstance
     {
-        $true = new ClassInstance("True");
+        $true = ClassInstance::getInstance("True");
         $true->setValue(true);
         return $true;
     }
@@ -33,7 +33,7 @@ class BuiltinMethodBuilder
      */
     private function falseInstance(): ClassInstance
     {
-        $false = new ClassInstance("False");
+        $false = ClassInstance::getInstance("False");
         $false->setValue(false);
         return $false;
     }
@@ -75,7 +75,7 @@ class BuiltinMethodBuilder
         });
 
         $class->addBuiltinMethod("asString", function (ClassInstance $receiver): ClassInstance {
-            $string = new ClassInstance("String");
+            $string = ClassInstance::getInstance("String");
             $string->setValue("");
             return $string;
         });
@@ -124,7 +124,7 @@ class BuiltinMethodBuilder
         });
 
         $class->addBuiltinMethod("asString", function (ClassInstance $receiver): ClassInstance {
-            $string = new ClassInstance("String");
+            $string = ClassInstance::getInstance("String");
             $string->setValue("nil");
             return $string;
         });
@@ -175,7 +175,7 @@ class BuiltinMethodBuilder
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
-            $result = new ClassInstance("Integer");
+            $result = ClassInstance::getInstance("Integer");
             $result->setValue($a + $b);
             return $result;
         });
@@ -189,7 +189,7 @@ class BuiltinMethodBuilder
                 throw new IncorrectArgumentException("Incorrect argument value/type");
             }
 
-            $result = new ClassInstance("Integer");
+            $result = ClassInstance::getInstance("Integer");
             $result->setValue($a - $b);
             return $result;
         });
@@ -204,7 +204,7 @@ class BuiltinMethodBuilder
                     throw new IncorrectArgumentException("Incorrect argument value/type");
                 }
 
-                $result = new ClassInstance("Integer");
+                $result = ClassInstance::getInstance("Integer");
                 $result->setValue($a * $b);
                 return $result;
             }
@@ -222,7 +222,7 @@ class BuiltinMethodBuilder
             $b = (int)$b;
 
             if ($b !== 0) {
-                $result = new ClassInstance("Integer");
+                $result = ClassInstance::getInstance("Integer");
                 $result->setValue(intdiv($a, $b));
                 return $result;
             } else {
@@ -232,7 +232,7 @@ class BuiltinMethodBuilder
 
         $class->addBuiltinMethod("asString", function (ClassInstance $receiver): ClassInstance {
             // Returns string representation of intern attribute value
-            $string = new ClassInstance("String");
+            $string = ClassInstance::getInstance("String");
             $value = $receiver->getValue();
             if (is_numeric($value)) {
                 $string->setValue((string)$value);
@@ -257,11 +257,11 @@ class BuiltinMethodBuilder
                 $repeat_times = $receiver->getValue();
 
                 // Default return value if for loop doesn't run
-                $return_value = new ClassInstance("Nil");
+                $return_value = ClassInstance::getInstance("Nil");
                 $return_value->setValue(null);
 
                 // Sends 'value:' message, either to block or (hopefully) to something that understands it
-                $argument = new ClassInstance("Integer");
+                $argument = ClassInstance::getInstance("Integer");
                 $argument->setValue(0);
 
                 $sender = new MessageSender($block->getVariable("self"));
@@ -322,11 +322,11 @@ class BuiltinMethodBuilder
         $class->addBuiltinMethod("asInteger", function (ClassInstance $receiver): ClassInstance {
             // If given string is easily convertible to integer, return its integer value
             if (!is_numeric($receiver->getValue())) {
-                $nil = new ClassInstance("Nil");
+                $nil = ClassInstance::getInstance("Nil");
                 $nil->setValue(null);
                 return $nil;
             } else {
-                $integer = new ClassInstance("Integer");
+                $integer = ClassInstance::getInstance("Integer");
                 $integer->setValue((int)$receiver->getValue());
                 return $integer;
             }
@@ -337,7 +337,7 @@ class BuiltinMethodBuilder
             function (ClassInstance $receiver, ClassInstance $object): ClassInstance {
                 $str2 = $object->getValue();
                 if (!is_string($str2)) {
-                    $nil = new ClassInstance("Nil");
+                    $nil = ClassInstance::getInstance("Nil");
                     $nil->setValue(null);
                     return $nil;
                 }
@@ -348,7 +348,7 @@ class BuiltinMethodBuilder
                     throw new MessageDNUException("Cant call concatenateWith: on non-string object");
                 }
 
-                $string = new ClassInstance("String");
+                $string = ClassInstance::getInstance("String");
                 $string->setValue($str1 . $str2);
                 return $string;
             }
@@ -374,12 +374,12 @@ class BuiltinMethodBuilder
                         !is_int($start) || !is_int($end) || $start < 1 || $end < 1
                         || $end > strlen($original_string) + 1
                     ) {
-                        $nil = new ClassInstance("Nil");
+                        $nil = ClassInstance::getInstance("Nil");
                         $nil->setValue(null);
                         return $nil;
                     }
 
-                    $string = new ClassInstance("String");
+                    $string = ClassInstance::getInstance("String");
 
                     if ($start >= $end) {
                         $string->setValue("");
@@ -392,7 +392,7 @@ class BuiltinMethodBuilder
                     return $string;
                 }
 
-                $nil = new ClassInstance("Nil");
+                $nil = ClassInstance::getInstance("Nil");
                 $nil->setValue(null);
                 return $nil;
             }
@@ -478,7 +478,7 @@ class BuiltinMethodBuilder
             "whileTrue:",
             function (BlockScope $block, ClassInstance $receiver, ClassInstance $object): ClassInstance {
                 // Default return value if while doesn't run
-                $ret_val = new ClassInstance("Nil");
+                $ret_val = ClassInstance::getInstance("Nil");
                 $ret_val->setValue(null);
 
                 // Creates new sender with 'self' variable set
@@ -564,7 +564,7 @@ class BuiltinMethodBuilder
         );
 
         $class->addBuiltinMethod("asString", function (ClassInstance $receiver): ClassInstance {
-            $string = new ClassInstance("String");
+            $string = ClassInstance::getInstance("String");
             $string->setValue("true");
             return $string;
         });
@@ -633,7 +633,7 @@ class BuiltinMethodBuilder
         );
 
         $class->addBuiltinMethod("asString", function (ClassInstance $receiver): ClassInstance {
-            $string = new ClassInstance("String");
+            $string = ClassInstance::getInstance("String");
             $string->setValue("false");
             return $string;
         });

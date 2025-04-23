@@ -59,7 +59,7 @@ class ExpressionEvaluator
             case "send":
                 return $this->evaluateMessageSend($expression);
             case "block":
-                $block = new ClassInstance("Block");
+                $block = ClassInstance::getInstance("Block");
                 $block->setValue($expression);
                 return $block;
             default:
@@ -83,23 +83,23 @@ class ExpressionEvaluator
         // Based on the type, create a new instance of the corresponding class
         switch ($type) {
             case "Integer":
-                $integer = new ClassInstance("Integer");
+                $integer = ClassInstance::getInstance("Integer");
                 $integer->setValue((int)$value);
                 return $integer;
             case "String":
-                $string = new ClassInstance("String");
+                $string = ClassInstance::getInstance("String");
                 $string->setValue($value);
                 return $string;
             case "True":
-                $tru = new ClassInstance("True");
+                $tru = ClassInstance::getInstance("True");
                 $tru->setValue(true);
                 return $tru;
             case "False":
-                $false = new ClassInstance("False");
+                $false = ClassInstance::getInstance("False");
                 $false->setValue(false);
                 return $false;
             case "Nil":
-                $nil = new ClassInstance("Nil");
+                $nil = ClassInstance::getInstance("Nil");
                 $nil->setValue(null);
                 return $nil;
             case "class":
@@ -130,7 +130,7 @@ class ExpressionEvaluator
             $parent_class = ClassDefinition::getClass($self_type)->getParentName(); // name of self's parent class
 
             // Returns instance of the parent of current class
-            $value = new ClassInstance($parent_class);
+            $value = ClassInstance::getInstance($parent_class);
             $value->setValue("__SUPER__");
         } else {
             $value = $this->getVariable($var_name);

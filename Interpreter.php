@@ -90,7 +90,7 @@ class Interpreter extends AbstractInterpreter
         }
 
         // Create instance of Main class and new scope
-        $main_class = new ClassInstance("Main");
+        $main_class = ClassInstance::getInstance("Main");
         $block = new BlockScope();
 
         // In this scope, 'self' references to Main class

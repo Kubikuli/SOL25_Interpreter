@@ -46,7 +46,7 @@ class MessageSender
         switch ($selector) {
             case "new":
                 // Just creates a new pure class instance
-                $new_class = new ClassInstance($receiver);
+                $new_class = ClassInstance::getInstance($receiver);
 
                 // Set default value
                 if (ClassDefinition::isInstanceOf($receiver, "Integer")) {
@@ -62,7 +62,7 @@ class MessageSender
                 return $new_class;
 
             case "from:":
-                $new_class = new ClassInstance($receiver);
+                $new_class = ClassInstance::getInstance($receiver);
                 if (isset($args[0])) {
                     $arg = $args[0];
                     // Check if both the classes are compatible
@@ -85,7 +85,7 @@ class MessageSender
                 }
 
                 // Create a new instance and initialize it with value from input
-                $string = new ClassInstance($receiver);
+                $string = ClassInstance::getInstance($receiver);
                 // Use the input reader
                 $inputReader = Interpreter::getInputReader();
                 $value = $inputReader ? $inputReader->readString() : "";

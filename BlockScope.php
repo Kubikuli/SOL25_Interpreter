@@ -33,7 +33,7 @@ class BlockScope
      */
     public function __construct()
     {
-        $this->return_value = new ClassInstance("Nil");
+        $this->return_value = ClassInstance::getInstance("Nil");
     }
 
     /**

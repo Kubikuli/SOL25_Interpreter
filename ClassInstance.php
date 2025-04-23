@@ -15,6 +15,11 @@ namespace IPP\Student;
  */
 class ClassInstance
 {
+    // Static singletons
+    private static ?ClassInstance $trueInstance = null;
+    private static ?ClassInstance $falseInstance = null;
+    private static ?ClassInstance $nilInstance = null;
+
     // Class type of the instance
     private string $class_name;
 
@@ -27,9 +32,30 @@ class ClassInstance
     private array $attributes;
 
     /**
+     * Factory for creating new instances of this class.
+     * For True|False|Nil classes returns existing instance, for others creates new one
+     *
+     * @param string $class_name Name of the class to be created
+     * @return ClassInstance Instance of the class requested
+     */
+    public static function getInstance(string $class_name): ClassInstance
+    {
+        switch ($class_name) {
+            case "True":
+                return self::$trueInstance ??= new ClassInstance('True');
+            case "False":
+                return self::$falseInstance ??= new ClassInstance('False');
+            case "Nil":
+                return self::$nilInstance ??= new ClassInstance('Nil');
+            default:
+                return new ClassInstance($class_name);
+        }
+    }
+
+    /**
      * Constructor initializes attributes to default values
      */
-    public function __construct(string $class)
+    private function __construct(string $class)
     {
         $this->class_name = $class;
         $this->attributes = [];
@@ -90,7 +116,7 @@ class ClassInstance
     /**
      * Gets the class name of the instance
      *
-     * @return string Class name of the instance
+     * @param string $class_name Class name of the instance
      */
     public function setClassName(string $class_name): void
     {
