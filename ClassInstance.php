@@ -88,6 +88,16 @@ class ClassInstance
     }
 
     /**
+     * Gets the class name of the instance
+     *
+     * @return string Class name of the instance
+     */
+    public function setClassName(string $class_name): void
+    {
+        $this->class_name = $class_name;
+    }
+
+    /**
      * Copies values from this instance to other instance given as an argument
      *
      * @param ClassInstance $instance Instance to which values will be copied

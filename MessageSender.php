@@ -111,7 +111,9 @@ class MessageSender
 
         // ^^^ finds correct method but the receiver should be self instance (if __SUPER__ is used)
         if ($receiver->getValue() === "__SUPER__") {
+            $super_class_name = $receiver->getClassName();
             $receiver = $this->getSelf();
+            $receiver->setClassName($super_class_name);
         }
 
         if ($method === null) {
