@@ -1,24 +1,37 @@
-# VUT-IPP_proj2
+# SOL25 Language Interpreter
 
-total points: 16/13  
+A PHP interpreter for the SOL25 language, implementing XML source code parsing and execution with error handling and I/O management.
 
+## Project Overview
+This project implements an interpreter for SOL25 (a simple Smalltalk-like programming language) as part of the IPP course at BUT FIT. The interpreter reads XML-formatted source code and executes it with proper error handling and return codes.  
+
+The `/core/` was provided by the teachers. My original work is present in `/student/`, implementing the interpret.
+
+## Usage
+```bash
+php interpret.php [options...]
 ```
-Vaše hodnocení části 1): 10,47 bodů
-Vaše hodnocení části 2): 0,50 bodů
-Vaše hodnocení části 5): 4,00 bodů (po 50% korelaci 4,00 bodů)
-  Komentář hodnocení části 5) (srážky uváděny v minibodech, 1 bod = 100 minibodů): PSR12 +50, STN9 +100, OK
 
-Pokud jste obdrželi výsledek částí 1) mimo hodnotící interval, tak
-bude oříznut, tak že získáte za implementaci alespoň 0 a ne více jak maximum bodů za daný skript.
+### Options
+- `--help` - Display help message and exit
+- `--source=<file>` - XML source code file
+- `--input=<file>` - Input data file
 
-Dekomprimace archivu proběhla úspěšně.
+**Note**: At least one of `--source` or `--input` must be specified. Unspecified options use STDIN.
 
-Procentuální hodnocení jednotlivých kategorií skriptu interpret.php:
-Načítání XML (detekce chyb): 48 % (špatné kódy 51 %)
-Detekce běhových chyb: 66 % (špatné kódy 33 %, nesouhlasné výpisy 0 %)
-Interpretace základních testů: 100 % (špatné kódy 0 %, nesouhlasné výpisy 0 %)
-Interpretace testů vestavěných tříd a metod: 100 % (špatné kódy 0 %, nesouhlasné výpisy 0 %)
-Interpretace testů konceptů OOP: 95 % (špatné kódy 4 %, nesouhlasné výpisy 0 %)
-Interpretace složitějších programů: 94 % (špatné kódy 0 %, nesouhlasné výpisy 5 %)
-Celkem bez rozšíření: 93 %
+### Examples
+```bash
+# Execute from XML file with input from stdin
+php interpret.php --source=program.xml
+
+# Execute from stdin with input file
+php interpret.php --input=data.txt
+
+# Execute with both files specified
+php interpret.php --source=program.xml --input=data.txt
 ```
+
+### Tests
+Also implemented tests myself for this project. Publicly available at: https://github.com/Kubikuli/IPP_proj2-tests
+
+**Total points: 16/13 points** (13+3 bonus)
