@@ -1,4 +1,5 @@
 # SOL25 Language Interpreter
+**VUT FIT 2024/25 - IPP Project 2**
 
 A PHP interpreter for the SOL25 language, implementing XML source code parsing and execution with error handling and I/O management.
 
@@ -32,6 +33,6 @@ php interpret.php --source=program.xml --input=data.txt
 ```
 
 ### Tests
-Also implemented tests myself for this project. Publicly available at: https://github.com/Kubikuli/IPP_proj2-tests
+Also implemented tests myself for this project. Publicly available at: https://github.com/Kubikuli/IPP_proj2-tests  
 
-**Total points: 16/13 points** (13+3 bonus)
+Total points: 16/13 points (13+3 bonus)
